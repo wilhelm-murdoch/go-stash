@@ -34,6 +34,8 @@ func (c *Client) Execute(query *queries.Query) (any, error) {
 		return nil, err
 	}
 
+	defer response.Body.Close()
+
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err

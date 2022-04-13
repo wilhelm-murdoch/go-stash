@@ -4,9 +4,9 @@ package queries
 type Author struct {
 	Username    string `json:"username"`
 	Name        string `json:"name"`
-	Tagline     string `json:"tag_line"`
+	Tagline     string `json:"tagLine"`
 	Photo       string `json:"photo"`
-	CoverImage  string `json:"cover_image"`
+	CoverImage  string `json:"coverImage"`
 	SocialMedia SocialMedia
 }
 
@@ -23,22 +23,22 @@ type SocialMedia struct {
 
 // Tag
 type Tag struct {
-	Name    string `json:"name"`
-	Slug    string `json:"slug"`
-	Tagline string `json:"tag_line"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	Logo string `json:"logo"`
 }
 
 // Post
 type Post struct {
 	Title       string `json:"title"`
 	Slug        string `json:"slug"`
+	DateAdded   string `json:"dateAdded"`
+	DateUpdated string `json:"dateUpdated"`
 	CUID        string `json:"cuid"`
 	Type        string `json:"type"`
-	DateAdded   string `json:"date_added"`
-	DateUpdated string `json:"date_updated"`
 	Content     string `json:"content"`
 	Brief       string `json:"brief"`
-	CoverImage  string `json:"cover_image"`
+	CoverImage  string `json:"coverImage"`
 	Author      Author
 	Tags        []Tag
 }

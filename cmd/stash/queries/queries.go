@@ -7,24 +7,6 @@ import (
 )
 
 var (
-	GetAuthor = `
-	user(username: \"%s\") { 
-		username
-		name
-		tagline
-		photo
-		coverImage
-		socialMedia { 
-			twitter
-			github
-			stackoverflow
-			linkedin
-			google 
-			website 
-			facebook
-		}
-	}`
-
 	GetPostDetail = `
 	post(slug:\"%s\", hostname:\"%s\") { 
 		title 
