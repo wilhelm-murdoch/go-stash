@@ -9,23 +9,35 @@ import (
 var (
 	GetPostDetail = `
 	post(slug:\"%s\", hostname:\"%s\") { 
-		title 
-		slug 
-		cuid 
-		type
-		dateAdded
-		dateUpdated
-		content
-		brief
-		coverImage
-		tags { 
-			name, 
-			slug, 
-			tagline
+    title
+    slug
+    cuid
+    coverImage
+    content
+    contentMarkdown
+    dateAdded
+    dateUpdated
+		tags {
+			name
+			slug
+			logo
 		}
-		author { 
-			username
-		} 
+    author {
+      username
+      name
+      tagline
+      location
+      photo
+      socialMedia {
+        twitter
+        github
+        stackoverflow
+        linkedin
+        google
+        website
+        facebook
+      }
+    }
 	}`
 
 	GetTimeline = `

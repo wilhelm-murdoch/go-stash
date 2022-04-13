@@ -1,9 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"os"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/wilhelm-murdoch/go-stash/cmd/stash/client"
@@ -17,19 +19,26 @@ var (
 
 	chanPostIngest = make(chan string)
 	chanFinished   = make(chan bool)
+	wgPostIngest   = new(sync.WaitGroup)
 )
 
 func Messenger() {
 	for {
 		select {
 		case slug := <-chanPostIngest:
-			go ingest.Posts.Get(slug, hostname)
+			wgPostIngest.Add(1)
+			go ingest.Posts.Get(slug, hostname, wgPostIngest)
 		case <-chanFinished:
 			close(chanFinished)
 			close(chanPostIngest)
 			return
 		}
 	}
+}
+
+func init() {
+	maxProcs := runtime.NumCPU()
+	runtime.GOMAXPROCS(maxProcs)
 }
 
 func main() {
@@ -57,6 +66,7 @@ func main() {
 		}
 
 		if len(result.([]queries.Post)) < 6 || len(result.([]queries.Post)) == 0 {
+			// log.Println("reached the last page of results")
 			break
 		}
 
@@ -68,6 +78,7 @@ func main() {
 			dateUpdated, _ := time.Parse(time.RFC3339, post.DateUpdated)
 
 			if dateAdded.After(since) || dateUpdated.After(since) {
+				// log.Println("getting ready to ingest:", post.Slug)
 				chanPostIngest <- post.Slug
 			}
 		}
@@ -75,7 +86,12 @@ func main() {
 		currentPage++
 	}
 
-	fmt.Printf("ingest.Posts.Length(): %v\n", ingest.Posts.Length())
+	wgPostIngest.Wait()
+
+	encoder := json.NewEncoder(os.Stdout)
+	if err := encoder.Encode(ingest.Posts.FilterPostsByTag().Items()); err != nil {
+		log.Fatal(err)
+	}
 
 	// optional sleep between pages
 	// save articles as json
