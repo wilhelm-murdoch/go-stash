@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wilhelm-murdoch/go-stash/cmd/stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/queries"
 )
 
 // Client

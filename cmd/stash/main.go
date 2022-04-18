@@ -1,104 +1,87 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
-	"sync"
 	"time"
 
-	"github.com/wilhelm-murdoch/go-stash/cmd/stash/client"
-	"github.com/wilhelm-murdoch/go-stash/cmd/stash/ingest"
-	"github.com/wilhelm-murdoch/go-stash/cmd/stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/cmd/stash/actions"
+
+	"github.com/urfave/cli/v2"
 )
 
 var (
-	username = "atapas"
-	hostname = "blog.greenroots.info"
-
-	chanPostIngest = make(chan string)
-	chanFinished   = make(chan bool)
-	wgPostIngest   = new(sync.WaitGroup)
+	// username = "atapas"
+	// hostname = "blog.greenroots.info"
+	username = "BlitzkriegPunk"
+	hostname = "wilhelm.codes"
 )
 
-func Messenger() {
-	for {
-		select {
-		case slug := <-chanPostIngest:
-			wgPostIngest.Add(1)
-			go ingest.Posts.Get(slug, hostname, wgPostIngest)
-		case <-chanFinished:
-			close(chanFinished)
-			close(chanPostIngest)
-			return
-		}
-	}
-}
+var (
+	// Version describes the version of the current build.
+	Version = "dev"
+
+	// Commit describes the commit of the current build.
+	Commit = "none"
+
+	// Date describes the date of the current build.
+	Date = "unknown"
+
+	// Release describes the stage of the current build, eg; development, production, etc...
+	Stage = "unknown"
+)
 
 func init() {
-	maxProcs := runtime.NumCPU()
-	runtime.GOMAXPROCS(maxProcs)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
-	defer func() {
-		chanFinished <- true
-	}()
-
-	client := client.New()
-
-	rewind, err := time.ParseDuration("5000h")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(0)
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Printf("Version: %s, Stage: %s, Commit: %s, Date: %s\n", Version, Stage, Commit, Date)
 	}
 
-	since := time.Now().Add(-rewind)
-
-	go Messenger()
-
-	currentPage := 0
-	for {
-		result, err := client.Execute(queries.New("GetTimeline", queries.GetTimeline, queries.TimelineUnmarshaler, username, currentPage))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if len(result.([]queries.Post)) < 6 || len(result.([]queries.Post)) == 0 {
-			// log.Println("reached the last page of results")
-			break
-		}
-
-		// Search publication for any posts that have been added, or updated,
-		// between now and `since`. All results are dispatched to the relevant
-		// ingestion handler via channel `chanPostIngest`:
-		for _, post := range result.([]queries.Post) {
-			dateAdded, _ := time.Parse(time.RFC3339, post.DateAdded)
-			dateUpdated, _ := time.Parse(time.RFC3339, post.DateUpdated)
-
-			if dateAdded.After(since) || dateUpdated.After(since) {
-				// log.Println("getting ready to ingest:", post.Slug)
-				chanPostIngest <- post.Slug
-			}
-		}
-
-		currentPage++
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Usage:   "print only the version",
+		Aliases: []string{"v"},
 	}
 
-	wgPostIngest.Wait()
+	app := &cli.App{
+		Name:     "stash",
+		Usage:    "a static site generator for Hashnode content",
+		Version:  Version,
+		Compiled: time.Now(),
+		Authors: []*cli.Author{{
+			Name:  "Wilhelm Murdoch",
+			Email: "wilhelm@devilmayco.de",
+		}},
+		Copyright: "(c) 2022 Wilhelm Codes ( https://wilhelm.codes )",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "username",
+				Usage:   "the @username of the target Hashnode user.",
+				Value:   "",
+				Aliases: []string{"u"},
+			},
+			&cli.StringFlag{
+				Name:    "hostname",
+				Usage:   "the hostname of the target Hashnode blog.",
+				Value:   "",
+				Aliases: []string{"h"},
+			},
+			&cli.StringFlag{
+				Name:    "since",
+				Usage:   ".",
+				Value:   "",
+				Aliases: []string{"s"},
+			},
+		},
+		Action: actions.RootHandler,
+	}
 
-	encoder := json.NewEncoder(os.Stdout)
-	if err := encoder.Encode(ingest.Posts.FilterPostsByTag().Items()); err != nil {
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
-
-	// optional sleep between pages
-	// save articles as json
-	// json file name == ultimate url
-	// adding .json to any url should display actual json file
-	// can be done concurrently; go-batch?
-	// download all article images to their own dedicated folder "/images/article-slug-name/<image>.png"
-	//   same with images in article content
-
 }

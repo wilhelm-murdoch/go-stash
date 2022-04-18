@@ -25,7 +25,7 @@ type SocialMedia struct {
 type Tag struct {
 	Name  string        `json:"name"`
 	Slug  string        `json:"slug"`
-	Logo  string        `json:"logo"`
+	Count int           `json:"count,omitempty"`
 	Posts []PostSummary `json:"posts,omitempty"`
 }
 
@@ -40,8 +40,8 @@ type Post struct {
 	Content     string `json:"content"`
 	Brief       string `json:"brief"`
 	CoverImage  string `json:"coverImage"`
+	Tags        []Tag  `json:"tags,omitempty"`
 	Author      Author
-	Tags        []Tag
 }
 
 type PostSummary struct {
@@ -49,8 +49,10 @@ type PostSummary struct {
 	Slug       string `json:"slug"`
 	Brief      string `json:"brief"`
 	CoverImage string `json:"coverImage"`
-	Author     Author
-	Tags       []Tag
+	Username   string `json:"username"`
+	Name       string `json:"name"`
+	Photo      string `json:"photo"`
+	Tags       []Tag  `json:"tags,omitempty"`
 }
 
 func NewPostSummary(p Post) PostSummary {
@@ -59,7 +61,9 @@ func NewPostSummary(p Post) PostSummary {
 		Slug:       p.Slug,
 		Brief:      p.Brief,
 		CoverImage: p.CoverImage,
-		Author:     p.Author,
+		Username:   p.Author.Username,
+		Name:       p.Author.Name,
+		Photo:      p.Author.Photo,
 		Tags:       p.Tags,
 	}
 }
