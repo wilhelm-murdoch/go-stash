@@ -1,5 +1,11 @@
 package main
 
+// implement proper logger
+// implement local saving of images
+// document
+// test
+// examples... maybe?
+
 import (
 	"fmt"
 	"log"
@@ -7,16 +13,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/wilhelm-murdoch/go-stash/cmd/stash/actions"
-
 	"github.com/urfave/cli/v2"
-)
-
-var (
-	// username = "atapas"
-	// hostname = "blog.greenroots.info"
-	username = "BlitzkriegPunk"
-	hostname = "wilhelm.codes"
+	"github.com/wilhelm-murdoch/go-stash/cmd/stash/commands"
 )
 
 var (
@@ -60,25 +58,21 @@ func main() {
 		Copyright: "(c) 2022 Wilhelm Codes ( https://wilhelm.codes )",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "username",
-				Usage:   "the @username of the target Hashnode user.",
-				Value:   "",
-				Aliases: []string{"u"},
+				Name:     "username",
+				Usage:    "the @username of the target Hashnode user.",
+				Required: true,
 			},
 			&cli.StringFlag{
-				Name:    "hostname",
-				Usage:   "the hostname of the target Hashnode blog.",
-				Value:   "",
-				Aliases: []string{"h"},
+				Name:     "hostname",
+				Usage:    "the hostname of the target Hashnode blog.",
+				Required: true,
 			},
 			&cli.StringFlag{
-				Name:    "since",
-				Usage:   ".",
-				Value:   "",
-				Aliases: []string{"s"},
+				Name:  "since",
+				Usage: "return content that occured since this period, eg; 10m, 10h",
 			},
 		},
-		Action: actions.RootHandler,
+		Action: commands.RootHandler,
 	}
 
 	if err := app.Run(os.Args); err != nil {

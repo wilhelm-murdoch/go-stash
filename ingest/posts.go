@@ -1,12 +1,13 @@
 package ingest
 
 import (
-	"log"
+	"fmt"
 	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/client"
 	"github.com/wilhelm-murdoch/go-stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/tools"
 )
 
 var (
@@ -37,9 +38,11 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 
 	result, err := p.client.Execute(queries.New("GetPostDetail", queries.GetPostDetail, queries.PostUnmarshaler, slug, hostname))
 	if err != nil {
-		log.Fatal(err)
+		tools.Warning(fmt.Sprintf("Error Processing: %s, %s", slug, err.Error()))
+		return
 	}
 
+	tools.Info(fmt.Sprintf("Processed Article: %s", slug))
 	p.results.Push(result.(queries.Post))
 }
 

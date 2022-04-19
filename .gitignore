@@ -36,3 +36,4 @@ cover.html
 .vscode
 *.bak
 *.json
+dist

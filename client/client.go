@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -18,7 +19,7 @@ type Client struct {
 // NewClient
 func New() *Client {
 	c := http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	return &Client{
@@ -33,8 +34,11 @@ func (c *Client) Execute(query *queries.Query) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, fmt.Errorf("expected a 200 response, but got %d instead", response.StatusCode)
+	}
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
