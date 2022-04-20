@@ -56,23 +56,39 @@ func main() {
 			Email: "wilhelm@devilmayco.de",
 		}},
 		Copyright: "(c) 2022 Wilhelm Codes ( https://wilhelm.codes )",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "username",
-				Usage:    "the @username of the target Hashnode user.",
-				Required: true,
+		Commands: []*cli.Command{
+			{
+				Name:  "scrape",
+				Usage: "fetches remote content from Hashnode's API and saves it locally",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "username",
+						Usage:    "the @username of the target Hashnode user.",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "hostname",
+						Usage:    "the hostname of the target Hashnode blog.",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:  "since",
+						Usage: "return content that occured since this period, eg; 10m, 10h",
+					},
+				},
+				Action: commands.ScrapeHandler,
 			},
-			&cli.StringFlag{
-				Name:     "hostname",
-				Usage:    "the hostname of the target Hashnode blog.",
-				Required: true,
+			{
+				Name:   "render",
+				Usage:  "uses Go templates to write static content",
+				Action: commands.RenderHandler,
 			},
-			&cli.StringFlag{
-				Name:  "since",
-				Usage: "return content that occured since this period, eg; 10m, 10h",
+			{
+				Name:   "serve",
+				Usage:  "starts a local web server which exposes your rendered site",
+				Action: commands.ServeHandler,
 			},
 		},
-		Action: commands.RootHandler,
 	}
 
 	if err := app.Run(os.Args); err != nil {

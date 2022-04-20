@@ -12,8 +12,8 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/tools"
 )
 
-// RootHandler is responsible for running the root command for the cli.
-func RootHandler(c *cli.Context) error {
+// ScrapeHandler is responsible for running the root command for the cli.
+func ScrapeHandler(c *cli.Context) error {
 	client := client.New()
 
 	var since time.Time
@@ -39,7 +39,7 @@ func RootHandler(c *cli.Context) error {
 			return err
 		}
 
-		if len(result.([]queries.Post)) < 6 || len(result.([]queries.Post)) == 0 {
+		if len(result.([]queries.Post)) == 0 {
 			tools.Info("Done paging.")
 			break
 		}
@@ -65,8 +65,11 @@ func RootHandler(c *cli.Context) error {
 
 	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if err := tools.SaveJson("dist/tags/index.json", ingest.Posts.GroupPostsByTag(true)); err != nil {
+		defer func() {
+			wg.Done()
+			tools.Info("Wrote: dist/tags/index.json")
+		}()
+		if err := ingest.Save("dist/tags/index.json", ingest.Posts.GroupPostsByTag(true)); err != nil {
 			tools.Fatal(err)
 		}
 	}()
@@ -75,8 +78,11 @@ func RootHandler(c *cli.Context) error {
 	wg.Add(ingest.Posts.Length())
 	ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
 		go func() {
-			defer wg.Done()
-			if err := tools.SaveJson(fmt.Sprintf("dist/%s.json", p.Slug), p); err != nil {
+			defer func() {
+				wg.Done()
+				tools.Info(fmt.Sprintf("Wrote: dist/%s.json", p.Slug))
+			}()
+			if err := ingest.Save(fmt.Sprintf("dist/%s.json", p.Slug), p); err != nil {
 				tools.Fatal(err)
 			}
 		}()
@@ -88,8 +94,11 @@ func RootHandler(c *cli.Context) error {
 	wg.Add(len(postsByTag))
 	for _, tag := range postsByTag {
 		go func(tag queries.Tag) {
-			defer wg.Done()
-			if err := tools.SaveJson(fmt.Sprintf("dist/tags/%s.json", tag.Slug), tag); err != nil {
+			defer func() {
+				wg.Done()
+				tools.Info(fmt.Sprintf("Wrote: dist/tags/%s.json", tag.Slug))
+			}()
+			if err := ingest.Save(fmt.Sprintf("dist/tags/%s.json", tag.Slug), tag); err != nil {
 				tools.Fatal(err)
 			}
 		}(tag)
