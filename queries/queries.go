@@ -12,6 +12,8 @@ var (
     title
     slug
     cuid
+		brief
+		type
     coverImage
     content
     contentMarkdown

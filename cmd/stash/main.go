@@ -1,5 +1,8 @@
 package main
 
+// implement collection.SortBy
+// add date to post summaries
+// add reading time; calculate in postsummary constructor
 // implement proper logger
 // implement local saving of images
 // document

@@ -2,14 +2,13 @@ package ingest
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/client"
 	"github.com/wilhelm-murdoch/go-stash/queries"
-	"github.com/wilhelm-murdoch/go-stash/tools"
 )
 
 var (
@@ -40,11 +39,12 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 
 	result, err := p.client.Execute(queries.New("GetPostDetail", queries.GetPostDetail, queries.PostUnmarshaler, slug, hostname))
 	if err != nil {
-		tools.Warning(fmt.Sprintf("Error Processing: %s, %s", slug, err.Error()))
+		log.Printf("Error Processing: %s, %s\n", slug, err.Error())
 		return
 	}
 
-	tools.Info(fmt.Sprintf("Processed Article: %s", slug))
+	log.Printf("Processed Article: %s\n", slug)
+
 	p.results.Push(result.(queries.Post))
 }
 
@@ -61,6 +61,19 @@ func (p *PostIngester) Length() int {
 // Results
 func (p *PostIngester) Results() *collection.Collection[queries.Post] {
 	return p.results
+}
+
+// GetPostSummaries
+func (p *PostIngester) GetPostSummaries() []queries.PostSummary {
+	posts := make([]queries.PostSummary, 0)
+
+	p.results.Each(func(i int, post queries.Post) bool {
+		post.ReadingTime = "bloop"
+		posts = append(posts, queries.NewPostSummary(post))
+		return false
+	})
+
+	return posts
 }
 
 // FilterDistinctTags

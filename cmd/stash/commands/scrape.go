@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/client"
 	"github.com/wilhelm-murdoch/go-stash/ingest"
 	"github.com/wilhelm-murdoch/go-stash/queries"
-	"github.com/wilhelm-murdoch/go-stash/tools"
 )
 
 // ScrapeHandler is responsible for running the root command for the cli.
@@ -23,11 +23,11 @@ func ScrapeHandler(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("expected --since value to use format of 10s, 10m or 10h, but got `%s` instead", c.String("since"))
 		}
-		tools.Debug(fmt.Sprintf("fetching content from `%s` ago due to usage of --since", c.String("since")))
+		log.Printf("fetching content from `%s` ago due to usage of --since\n", c.String("since"))
 		since = since.Add(-rewind)
 	} else {
 		rewind, _ := time.ParseDuration("99999h")
-		tools.Warning("--since flag not used, so fetching content from the beginning")
+		log.Println("--since flag not used, so fetching content from the beginning")
 		since = since.Add(-rewind)
 	}
 
@@ -40,10 +40,10 @@ func ScrapeHandler(c *cli.Context) error {
 		}
 
 		if len(result.([]queries.Post)) == 0 {
-			tools.Info("Done paging.")
+			log.Println("Done paging.")
 			break
 		}
-		tools.Info(fmt.Sprintf("Searching Page: %d", currentPage+1))
+		log.Printf("Searching Page: %d\n", currentPage+1)
 
 		// Search publication for any posts that have been added, or updated,
 		// between now and `since`. All results are sent to the post ingestion
@@ -54,7 +54,7 @@ func ScrapeHandler(c *cli.Context) error {
 
 			if dateAdded.After(since) || dateUpdated.After(since) {
 				wg.Add(1)
-				tools.Info(fmt.Sprintf("Found Article: %s", post.Slug))
+				log.Printf("Found Article: %s", post.Slug)
 				go ingest.Posts.Get(post.Slug, c.String("hostname"), wg)
 			}
 		}
@@ -63,27 +63,18 @@ func ScrapeHandler(c *cli.Context) error {
 	}
 	wg.Wait()
 
-	wg.Add(1)
-	go func() {
-		defer func() {
-			wg.Done()
-			tools.Info("Wrote: dist/tags/index.json")
-		}()
-		if err := ingest.Save("dist/tags/index.json", ingest.Posts.GroupPostsByTag(true)); err != nil {
-			tools.Fatal(err)
-		}
-	}()
-	wg.Wait()
-
 	wg.Add(ingest.Posts.Length())
 	ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
 		go func() {
 			defer func() {
 				wg.Done()
-				tools.Info(fmt.Sprintf("Wrote: dist/%s.json", p.Slug))
+				log.Printf("Wrote: dist/%s.json\n", p.Slug)
 			}()
+
+			p.ReadingTime = queries.EstimateReadingTime(p.ContentMarkdown)
+
 			if err := ingest.Save(fmt.Sprintf("dist/%s.json", p.Slug), p); err != nil {
-				tools.Fatal(err)
+				log.Fatal(err)
 			}
 		}()
 		return false
@@ -96,13 +87,35 @@ func ScrapeHandler(c *cli.Context) error {
 		go func(tag queries.Tag) {
 			defer func() {
 				wg.Done()
-				tools.Info(fmt.Sprintf("Wrote: dist/tags/%s.json", tag.Slug))
+				log.Printf("Wrote: dist/tags/%s.json\n", tag.Slug)
 			}()
 			if err := ingest.Save(fmt.Sprintf("dist/tags/%s.json", tag.Slug), tag); err != nil {
-				tools.Fatal(err)
+				log.Fatal(err)
 			}
 		}(tag)
 	}
+	wg.Wait()
+
+	wg.Add(2)
+	go func() {
+		defer func() {
+			wg.Done()
+			log.Println("Wrote: dist/tags/index.json")
+		}()
+		if err := ingest.Save("dist/tags/index.json", ingest.Posts.GroupPostsByTag(true)); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	go func() {
+		defer func() {
+			wg.Done()
+			log.Println("Wrote: dist/index.json")
+		}()
+		if err := ingest.Save("dist/index.json", ingest.Posts.GetPostSummaries()); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	wg.Wait()
 
 	return nil
