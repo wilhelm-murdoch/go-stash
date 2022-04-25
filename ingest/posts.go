@@ -68,7 +68,6 @@ func (p *PostIngester) GetPostSummaries() []queries.PostSummary {
 	posts := make([]queries.PostSummary, 0)
 
 	p.results.Each(func(i int, post queries.Post) bool {
-		post.ReadingTime = "bloop"
 		posts = append(posts, queries.NewPostSummary(post))
 		return false
 	})

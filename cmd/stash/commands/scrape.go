@@ -12,7 +12,8 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/queries"
 )
 
-// ScrapeHandler is responsible for running the root command for the cli.
+// ScrapeHandler is responsible for fetching content from the specified
+// Hashnode website and author:
 func ScrapeHandler(c *cli.Context) error {
 	client := client.New()
 
@@ -63,6 +64,7 @@ func ScrapeHandler(c *cli.Context) error {
 	}
 	wg.Wait()
 
+	// Save each post as an individual JSON file:
 	wg.Add(ingest.Posts.Length())
 	ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
 		go func() {
@@ -81,6 +83,7 @@ func ScrapeHandler(c *cli.Context) error {
 	})
 	wg.Wait()
 
+	// Writes a JSON file for each tag and their associated posts:
 	postsByTag := ingest.Posts.GroupPostsByTag(true)
 	wg.Add(len(postsByTag))
 	for _, tag := range postsByTag {
@@ -96,6 +99,7 @@ func ScrapeHandler(c *cli.Context) error {
 	}
 	wg.Wait()
 
+	// Writes a JSON file containing all tags with their associated posts:
 	wg.Add(2)
 	go func() {
 		defer func() {
@@ -107,6 +111,7 @@ func ScrapeHandler(c *cli.Context) error {
 		}
 	}()
 
+	// Writes a JSON file containing all posts:
 	go func() {
 		defer func() {
 			wg.Done()

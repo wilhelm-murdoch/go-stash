@@ -4,6 +4,9 @@ BUILD_REF=v0.0.0
 BUILD_STAGE=development
 BUILD_COMMIT=$(shell git rev-parse HEAD)
 
+reset:
+	rm dist/*.json dist/tags/*.json
+
 clean:
 	rm stash *.out *.test 
 
