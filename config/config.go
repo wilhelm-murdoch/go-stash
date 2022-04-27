@@ -1,44 +1,62 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 )
 
 type TemplateMapType string
 
 const (
-	Unknown TemplateMapType = "unknown"
 	Tag     TemplateMapType = "tag"
 	Article TemplateMapType = "article"
+	Author  TemplateMapType = "author"
 	Page    TemplateMapType = "page"
 	Index   TemplateMapType = "index"
 )
 
-type Config struct {
-	Directories struct {
-		Articles  string `yaml:"articles"`
-		Tags      string `yaml:"tags"`
-		Authors   string `yaml:"authors"`
-		Templates string `yaml:"templates"`
-		Images    string `yaml:"images"`
-		Static    string `yaml:"static"`
-	} `yaml:"directories"`
-	Index struct {
-		Input    string   `yaml:"input"`
-		Output   string   `yaml:"output"`
-		Sources  []string `yaml:"sources"`
-		Partials []string `yaml:"partials"`
-	} `yaml:"index"`
+type Configuration struct {
+	Paths struct {
+		Root      string `json:"root" yaml:"root"`
+		Articles  string `json:"articles" yaml:"articles"`
+		Authors   string `json:"authors" yaml:"authors"`
+		Tags      string `json:"tags" yaml:"tags"`
+		Templates string `json:"templates" yaml:"templates"`
+	} `json:"paths" yaml:"paths"`
+	Mappings []Mapping `json:"mappings" yaml:"mappings"`
 }
 
-func New(configPath string) (*Config, error) {
-	config := &Config{}
+type Mapping struct {
+	Type     TemplateMapType `json:"type" yaml:"type"`
+	Pattern  string          `json:"pattern" yaml:"pattern"`
+	Input    string          `json:"input" yaml:"input"`
+	Output   string          `json:"output" yaml:"output"`
+	Partials []string        `json:"partials" yaml:"partials"`
+	Sources  []string        `json:"sources" yaml:"sources"`
+}
+
+// New
+func New(configPath string) (*Configuration, error) {
+	config := &Configuration{}
+
+	if configPath == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		configPath = fmt.Sprintf("%s/.stash.yaml", cwd)
+	}
+
+	if configPath == "" {
+		return nil, errors.New("you must specify a valid configuration file")
+	}
 
 	if stats, err := os.Stat(configPath); err != nil || stats.Size() == 0 {
-		return nil, fmt.Errorf("specified config file `%s` is empty", configPath)
+		return nil, fmt.Errorf("specified config file `%s` is empty or does not exist", configPath)
 	}
 
 	file, err := os.Open(configPath)
@@ -54,20 +72,22 @@ func New(configPath string) (*Config, error) {
 	return config.Validate()
 }
 
-func (c *Config) Validate() (*Config, error) {
-	if err := c.validateDirectoriesBlock(); err != nil {
+// Validate
+func (c *Configuration) Validate() (*Configuration, error) {
+	if err := c.validatePathsBlock(); err != nil {
 		return c, err
 	}
 
-	if err := c.validateIndexBlock(); err != nil {
+	if err := c.validateMappings(); err != nil {
 		return c, err
 	}
 
 	return c, nil
 }
 
-func (c *Config) validateDirectoriesBlock() error {
-	isValid := func(label, path string) error {
+// validatePathsBlock
+func (c *Configuration) validatePathsBlock() error {
+	isPathValid := func(label, path string) error {
 		stats, err := os.Stat(path)
 		if err != nil {
 			return fmt.Errorf("file system error for `%s`: %s", label, err)
@@ -77,20 +97,26 @@ func (c *Config) validateDirectoriesBlock() error {
 			return fmt.Errorf("path `%s` defined for `%s` must be a valid directory", path, label)
 		}
 
+		if stats.Mode().Perm()&(1<<(uint(7))) == 0 {
+			return fmt.Errorf("path `%s` defined for `%s` must be writable", path, label)
+		}
+
 		return nil
 	}
 
-	checks := map[string]string{
-		"directories.articles":  c.Directories.Articles,
-		"directories.tags":      c.Directories.Tags,
-		"directories.authors":   c.Directories.Authors,
-		"directories.templates": c.Directories.Templates,
-		"directories.images":    c.Directories.Images,
-		"directories.static":    c.Directories.Static,
+	if err := isPathValid("paths.root", c.Paths.Root); err != nil {
+		return err
 	}
 
-	for k, v := range checks {
-		if err := isValid(k, v); err != nil {
+	checks := map[string]string{
+		"paths.articles":  fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Articles),
+		"paths.tags":      fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Tags),
+		"paths.authors":   fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Authors),
+		"paths.templates": fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Templates),
+	}
+
+	for label, path := range checks {
+		if err := isPathValid(label, path); err != nil {
 			return err
 		}
 	}
@@ -98,8 +124,8 @@ func (c *Config) validateDirectoriesBlock() error {
 	return nil
 }
 
-func (c *Config) validateIndexBlock() error {
-	isValid := func(label, path string) error {
+func (c *Configuration) validateMappings() error {
+	isPathValid := func(label, path string) error {
 		stats, err := os.Stat(path)
 		if err != nil {
 			return fmt.Errorf("file system error for `%s`: %s", label, err)
@@ -112,13 +138,43 @@ func (c *Config) validateIndexBlock() error {
 		return nil
 	}
 
-	if err := isValid("index.input", fmt.Sprintf("%s/%s", c.Directories.Templates, c.Index.Input)); err != nil {
-		return err
+	templatePath := func(fileName string) string {
+		return fmt.Sprintf("%s/%s/%s", c.Paths.Root, c.Paths.Templates, fileName)
 	}
 
-	checks := map[string][]string{
-		"index.sources": {c.Directories.Templates, c.Index.Sources},
+	var indexDefined bool
+	for i1, mapping := range c.Mappings {
+		if mapping.Type == Index {
+			if indexDefined {
+				return errors.New("only a single mapping of type `index` is allowed")
+			} else {
+				indexDefined = true
+			}
+		}
+
+		if err := isPathValid(fmt.Sprintf("mappings[%d]input", i1), templatePath(mapping.Input)); err != nil {
+			return err
+		}
+
+		for i2, partial := range mapping.Partials {
+			if err := isPathValid(fmt.Sprintf("mappings[%d]partials[%d]", i1, i2), templatePath(partial)); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !indexDefined {
+		return errors.New("a single mapping of type `index` must be defined")
 	}
 
 	return nil
+}
+
+func WrapWithConfig(c *cli.Context, action func(*cli.Context, *Configuration) error) error {
+	config, err := New(c.String("config"))
+	if err != nil {
+		return err
+	}
+
+	return action(c, config)
 }

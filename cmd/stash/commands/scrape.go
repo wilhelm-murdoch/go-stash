@@ -3,18 +3,20 @@ package commands
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"github.com/wilhelm-murdoch/go-stash/client"
+	"github.com/wilhelm-murdoch/go-stash/config"
 	"github.com/wilhelm-murdoch/go-stash/ingest"
 	"github.com/wilhelm-murdoch/go-stash/queries"
 )
 
 // ScrapeHandler is responsible for fetching content from the specified
 // Hashnode website and author:
-func ScrapeHandler(c *cli.Context) error {
+func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	client := client.New()
 
 	var since time.Time
@@ -68,14 +70,15 @@ func ScrapeHandler(c *cli.Context) error {
 	wg.Add(ingest.Posts.Length())
 	ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
 		go func() {
+			path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Articles, p.Slug)
 			defer func() {
 				wg.Done()
-				log.Printf("Wrote: dist/%s.json\n", p.Slug)
+				log.Println("Wrote:", path)
 			}()
 
 			p.ReadingTime = queries.EstimateReadingTime(p.ContentMarkdown)
 
-			if err := ingest.Save(fmt.Sprintf("dist/%s.json", p.Slug), p); err != nil {
+			if err := ingest.Save(path, p); err != nil {
 				log.Fatal(err)
 			}
 		}()
@@ -88,11 +91,12 @@ func ScrapeHandler(c *cli.Context) error {
 	wg.Add(len(postsByTag))
 	for _, tag := range postsByTag {
 		go func(tag queries.Tag) {
+			path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug)
 			defer func() {
 				wg.Done()
-				log.Printf("Wrote: dist/tags/%s.json\n", tag.Slug)
+				log.Println("Wrote:", path)
 			}()
-			if err := ingest.Save(fmt.Sprintf("dist/tags/%s.json", tag.Slug), tag); err != nil {
+			if err := ingest.Save(path, tag); err != nil {
 				log.Fatal(err)
 			}
 		}(tag)
@@ -102,25 +106,56 @@ func ScrapeHandler(c *cli.Context) error {
 	// Writes a JSON file containing all tags with their associated posts:
 	wg.Add(2)
 	go func() {
+		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
 		defer func() {
 			wg.Done()
-			log.Println("Wrote: dist/tags/index.json")
+			log.Println("Wrote:", path)
 		}()
-		if err := ingest.Save("dist/tags/index.json", ingest.Posts.GroupPostsByTag(true)); err != nil {
+		if err := ingest.Save(path, ingest.Posts.GroupPostsByTag(true)); err != nil {
 			log.Fatal(err)
 		}
 	}()
 
 	// Writes a JSON file containing all posts:
 	go func() {
+		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
 		defer func() {
 			wg.Done()
-			log.Println("Wrote: dist/index.json")
+			log.Println("Wrote:", path)
 		}()
-		if err := ingest.Save("dist/index.json", ingest.Posts.GetPostSummaries()); err != nil {
+		if err := ingest.Save(path, ingest.Posts.GetPostSummaries()); err != nil {
 			log.Fatal(err)
 		}
 	}()
+	wg.Wait()
+
+	wg.Add(1)
+	go func() {
+		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
+		defer func() {
+			wg.Done()
+			log.Println("Wrote:", path)
+		}()
+		if err := ingest.Save(path, ingest.Posts.FilterDistinctAuthors()); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	wg.Wait()
+
+	authors := ingest.Posts.FilterDistinctAuthors()
+	wg.Add(len(authors))
+	for _, author := range authors {
+		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, strings.ToLower(author.Username))
+		go func(author queries.Author) {
+			defer func() {
+				wg.Done()
+				log.Println("Wrote:", path)
+			}()
+			if err := ingest.Save(path, author); err != nil {
+				log.Fatal(err)
+			}
+		}(author)
+	}
 	wg.Wait()
 
 	return nil

@@ -1,8 +1,6 @@
 package main
 
-// implement collection.SortBy
-// add date to post summaries
-// add reading time; calculate in postsummary constructor
+/// move the bulk of this logic into the config constructor
 // implement proper logger
 // implement local saving of images
 // document
@@ -18,6 +16,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/wilhelm-murdoch/go-stash/cmd/stash/commands"
+	"github.com/wilhelm-murdoch/go-stash/config"
 )
 
 var (
@@ -65,6 +64,11 @@ func main() {
 				Usage: "fetches remote content from Hashnode's API and saves it locally",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
+						Name:    "config",
+						Usage:   "path to the current project's `.stash.yml` configuration",
+						EnvVars: []string{"CONFIG"},
+					},
+					&cli.StringFlag{
 						Name:     "username",
 						Usage:    "the @username of the target Hashnode user.",
 						Required: true,
@@ -79,17 +83,23 @@ func main() {
 						Usage: "return content that occured since this period, eg; 10m, 10h",
 					},
 				},
-				Action: commands.ScrapeHandler,
+				Action: func(c *cli.Context) error {
+					return config.WrapWithConfig(c, commands.ScrapeHandler)
+				},
 			},
 			{
-				Name:   "render",
-				Usage:  "uses Go templates to write static content",
-				Action: commands.RenderHandler,
+				Name:  "render",
+				Usage: "uses Go templates to write static content",
+				Action: func(c *cli.Context) error {
+					return config.WrapWithConfig(c, commands.RenderHandler)
+				},
 			},
 			{
-				Name:   "serve",
-				Usage:  "starts a local web server which exposes your rendered site",
-				Action: commands.ServeHandler,
+				Name:  "serve",
+				Usage: "starts a local web server which exposes your rendered site",
+				Action: func(c *cli.Context) error {
+					return config.WrapWithConfig(c, commands.ServeHandler)
+				},
 			},
 		},
 	}

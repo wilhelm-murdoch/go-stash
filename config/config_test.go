@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +8,6 @@ import (
 )
 
 func TestConfigNew(t *testing.T) {
-	c, err := config.New(".stash.test.yaml")
+	_, err := config.New("../.stash.yaml")
 	assert.Nil(t, err, "Expected no errors, but got %s", err)
-	fmt.Printf("c: %v\n", c)
 }

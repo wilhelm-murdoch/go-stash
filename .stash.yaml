@@ -1,0 +1,34 @@
+paths:
+  root: "dist"
+  articles: "articles"
+  authors: "authors"
+  tags: "tags"
+  templates: "templates"
+
+mappings:
+  - type: "article"
+    input: "article.tpl"
+    partials:
+      - "partials/header.tpl"
+      - "partials/footer.tpl"
+      - "partials/wrapper.tpl"
+  - type: "tag"
+    input: "tags.tpl"
+    output: "tags/index.html"
+    sources:
+      - "tags/index.json"
+    partials:
+      - "partials/header.tpl"
+      - "partials/footer.tpl"
+      - "partials/wrapper.tpl"
+  - type: "index"
+    input: "index.tpl"
+    output: "index.html"
+    sources:
+      - "tags/index.json"
+      - "articles/index.json"
+      - "authors/index.json"
+    partials:
+      - "partials/header.tpl"
+      - "partials/footer.tpl"
+      - "partials/wrapper.tpl"

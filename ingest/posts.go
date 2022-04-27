@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -17,9 +18,18 @@ var (
 		results: collection.New[queries.Post](),
 	}
 
-	contains = func(needle queries.Tag, haystack []queries.Tag) bool {
+	tagsContain = func(needle queries.Tag, haystack []queries.Tag) bool {
 		for _, tag := range haystack {
 			if needle.Slug == tag.Slug {
+				return true
+			}
+		}
+		return false
+	}
+
+	authorsContain = func(needle queries.Author, haystack []queries.Author) bool {
+		for _, tag := range haystack {
+			if needle.Username == tag.Username {
 				return true
 			}
 		}
@@ -75,13 +85,29 @@ func (p *PostIngester) GetPostSummaries() []queries.PostSummary {
 	return posts
 }
 
+// FilterDistinctAuthors
+func (p *PostIngester) FilterDistinctAuthors() []queries.Author {
+	authors := make([]queries.Author, 0)
+
+	p.results.Each(func(i int, post queries.Post) bool {
+
+		if !authorsContain(post.Author, authors) {
+			authors = append(authors, post.Author)
+		}
+
+		return false
+	})
+
+	return authors
+}
+
 // FilterDistinctTags
 func (p *PostIngester) FilterDistinctTags() []queries.Tag {
 	tags := make([]queries.Tag, 0)
 
 	p.results.Each(func(i int, post queries.Post) bool {
 		for _, tag := range post.Tags {
-			if !contains(tag, tags) {
+			if !tagsContain(tag, tags) {
 				tags = append(tags, tag)
 			}
 		}
@@ -98,7 +124,7 @@ func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []queries.Tag {
 
 	for i, tag := range tags {
 		p.results.Each(func(_ int, post queries.Post) bool {
-			if contains(tag, post.Tags) {
+			if tagsContain(tag, post.Tags) {
 				if includePostSummary {
 					tags[i].Posts = append(tags[i].Posts, queries.NewPostSummary(post))
 				}
@@ -114,7 +140,11 @@ func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []queries.Tag {
 
 // Save
 func Save(path string, object any) error {
-	file, err := os.Create(path)
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		return err
+	}
+
+	file, err := os.Create(fmt.Sprintf("%s/index.json", path))
 	if err != nil {
 		return err
 	}
