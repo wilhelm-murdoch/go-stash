@@ -1,5 +1,12 @@
+title: "wilhelm codes"
+description: "I code here and do other things."
+url: "https://wilhelm.codes"
+feed_limit: 15
+
+
 paths:
   root: "dist"
+  feeds: "feeds"
   articles: "articles"
   authors: "authors"
   tags: "tags"

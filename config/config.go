@@ -20,8 +20,13 @@ const (
 )
 
 type Configuration struct {
-	Paths struct {
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"`
+	Url         string `json:"url" yaml:"url"`
+	FeedLimit   int    `json:"feedLimit" yaml:"feed_limit"`
+	Paths       struct {
 		Root      string `json:"root" yaml:"root"`
+		Feeds     string `json:"feeds" yaml:"feeds"`
 		Articles  string `json:"articles" yaml:"articles"`
 		Authors   string `json:"authors" yaml:"authors"`
 		Tags      string `json:"tags" yaml:"tags"`
@@ -113,6 +118,7 @@ func (c *Configuration) validatePathsBlock() error {
 		"paths.tags":      fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Tags),
 		"paths.authors":   fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Authors),
 		"paths.templates": fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Templates),
+		"paths.feeds":     fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Feeds),
 	}
 
 	for label, path := range checks {
