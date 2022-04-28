@@ -11,6 +11,7 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/config"
 	"github.com/wilhelm-murdoch/go-stash/ingest"
 	"github.com/wilhelm-murdoch/go-stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/writers"
 )
 
 // ScrapeHandler is responsible for fetching content from the specified
@@ -65,104 +66,32 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	}
 	wg.Wait()
 
-	// Save each post as an individual JSON file:
-	// wg.Add(ingest.Posts.Length())
-	// ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
-	// 	go func() {
-	// 		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Articles, p.Slug)
-	// 		defer func() {
-	// 			wg.Done()
-	// 			log.Println("Wrote:", path)
-	// 		}()
+	basePathArticles := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
+	if err := writers.Write(basePathArticles, ingest.Posts.Results().Items(), false); err != nil {
+		return err
+	}
 
-	// 		p.ReadingTime = queries.EstimateReadingTime(p.ContentMarkdown)
+	if err := writers.Write(basePathArticles, ingest.Posts.GetPostSummaries(), true); err != nil {
+		return err
+	}
 
-	// 		if err := ingest.Save(path, p); err != nil {
-	// 			log.Fatal(err)
-	// 		}
-	// 	}()
-	// 	return false
-	// })
-	// wg.Wait()
+	basePathTags := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
+	if err := writers.Write(basePathTags, ingest.Posts.GroupPostsByTag(true), false); err != nil {
+		return err
+	}
 
-	ingest.SaveEach(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), ingest.Posts.Results().Items())
-	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
-	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
-	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
-	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
-	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
+	if err := writers.Write(basePathTags, ingest.Posts.GroupPostsByTag(true), true); err != nil {
+		return err
+	}
 
-	// // Writes a JSON file for each tag and their associated posts:
-	// postsByTag := ingest.Posts.GroupPostsByTag(true)
-	// wg.Add(len(postsByTag))
-	// for _, tag := range postsByTag {
-	// 	go func(tag queries.Tag) {
-	// 		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug)
-	// 		defer func() {
-	// 			wg.Done()
-	// 			log.Println("Wrote:", path)
-	// 		}()
-	// 		if err := ingest.Save(path, tag); err != nil {
-	// 			log.Fatal(err)
-	// 		}
-	// 	}(tag)
-	// }
-	// wg.Wait()
+	basePathAuthors := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
+	if err := writers.Write(basePathAuthors, ingest.Posts.FilterDistinctAuthors(), false); err != nil {
+		return err
+	}
 
-	// // Writes a JSON file containing all tags with their associated posts:
-	// wg.Add(2)
-	// go func() {
-	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
-	// 	defer func() {
-	// 		wg.Done()
-	// 		log.Println("Wrote:", path)
-	// 	}()
-	// 	if err := ingest.Save(path, ingest.Posts.GroupPostsByTag(true)); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }()
-
-	// // Writes a JSON file containing all posts:
-	// go func() {
-	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
-	// 	defer func() {
-	// 		wg.Done()
-	// 		log.Println("Wrote:", path)
-	// 	}()
-	// 	if err := ingest.Save(path, ingest.Posts.GetPostSummaries()); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }()
-	// wg.Wait()
-
-	// wg.Add(1)
-	// go func() {
-	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
-	// 	defer func() {
-	// 		wg.Done()
-	// 		log.Println("Wrote:", path)
-	// 	}()
-	// 	if err := ingest.Save(path, ingest.Posts.FilterDistinctAuthors()); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }()
-	// wg.Wait()
-
-	// authors := ingest.Posts.FilterDistinctAuthors()
-	// wg.Add(len(authors))
-	// for _, author := range authors {
-	// 	path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, strings.ToLower(author.Username))
-	// 	go func(author queries.Author) {
-	// 		defer func() {
-	// 			wg.Done()
-	// 			log.Println("Wrote:", path)
-	// 		}()
-	// 		if err := ingest.Save(path, author); err != nil {
-	// 			log.Fatal(err)
-	// 		}
-	// 	}(author)
-	// }
-	// wg.Wait()
+	if err := writers.Write(basePathAuthors, ingest.Posts.FilterDistinctAuthors(), true); err != nil {
+		return err
+	}
 
 	return nil
 }

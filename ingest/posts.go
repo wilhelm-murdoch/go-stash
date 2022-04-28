@@ -1,11 +1,7 @@
 package ingest
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
-	"os"
-	"reflect"
 	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
@@ -137,34 +133,4 @@ func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []queries.Tag {
 	}
 
 	return tags
-}
-
-func SaveEach(path string, object any) error {
-
-	switch object.(type) {
-	case []queries.Post:
-		fmt.Println(reflect.TypeOf(object))
-	}
-	return nil
-}
-
-// Save
-func Save(path string, object any) error {
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		return err
-	}
-
-	file, err := os.Create(fmt.Sprintf("%s/index.json", path))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetEscapeHTML(false)
-	if err = encoder.Encode(object); err != nil {
-		return err
-	}
-
-	return nil
 }
