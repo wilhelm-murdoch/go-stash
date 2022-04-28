@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
@@ -136,6 +137,15 @@ func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []queries.Tag {
 	}
 
 	return tags
+}
+
+func SaveEach(path string, object any) error {
+
+	switch object.(type) {
+	case []queries.Post:
+		fmt.Println(reflect.TypeOf(object))
+	}
+	return nil
 }
 
 // Save

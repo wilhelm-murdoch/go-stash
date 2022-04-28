@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
@@ -67,96 +66,103 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	wg.Wait()
 
 	// Save each post as an individual JSON file:
-	wg.Add(ingest.Posts.Length())
-	ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
-		go func() {
-			path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Articles, p.Slug)
-			defer func() {
-				wg.Done()
-				log.Println("Wrote:", path)
-			}()
+	// wg.Add(ingest.Posts.Length())
+	// ingest.Posts.Results().Each(func(i int, p queries.Post) bool {
+	// 	go func() {
+	// 		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Articles, p.Slug)
+	// 		defer func() {
+	// 			wg.Done()
+	// 			log.Println("Wrote:", path)
+	// 		}()
 
-			p.ReadingTime = queries.EstimateReadingTime(p.ContentMarkdown)
+	// 		p.ReadingTime = queries.EstimateReadingTime(p.ContentMarkdown)
 
-			if err := ingest.Save(path, p); err != nil {
-				log.Fatal(err)
-			}
-		}()
-		return false
-	})
-	wg.Wait()
+	// 		if err := ingest.Save(path, p); err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 	}()
+	// 	return false
+	// })
+	// wg.Wait()
 
-	// Writes a JSON file for each tag and their associated posts:
-	postsByTag := ingest.Posts.GroupPostsByTag(true)
-	wg.Add(len(postsByTag))
-	for _, tag := range postsByTag {
-		go func(tag queries.Tag) {
-			path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug)
-			defer func() {
-				wg.Done()
-				log.Println("Wrote:", path)
-			}()
-			if err := ingest.Save(path, tag); err != nil {
-				log.Fatal(err)
-			}
-		}(tag)
-	}
-	wg.Wait()
+	ingest.SaveEach(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), ingest.Posts.Results().Items())
+	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
+	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
+	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
+	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
+	// ingest.SaveEach(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug), tag)
 
-	// Writes a JSON file containing all tags with their associated posts:
-	wg.Add(2)
-	go func() {
-		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
-		defer func() {
-			wg.Done()
-			log.Println("Wrote:", path)
-		}()
-		if err := ingest.Save(path, ingest.Posts.GroupPostsByTag(true)); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	// // Writes a JSON file for each tag and their associated posts:
+	// postsByTag := ingest.Posts.GroupPostsByTag(true)
+	// wg.Add(len(postsByTag))
+	// for _, tag := range postsByTag {
+	// 	go func(tag queries.Tag) {
+	// 		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Tags, tag.Slug)
+	// 		defer func() {
+	// 			wg.Done()
+	// 			log.Println("Wrote:", path)
+	// 		}()
+	// 		if err := ingest.Save(path, tag); err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 	}(tag)
+	// }
+	// wg.Wait()
 
-	// Writes a JSON file containing all posts:
-	go func() {
-		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
-		defer func() {
-			wg.Done()
-			log.Println("Wrote:", path)
-		}()
-		if err := ingest.Save(path, ingest.Posts.GetPostSummaries()); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	wg.Wait()
+	// // Writes a JSON file containing all tags with their associated posts:
+	// wg.Add(2)
+	// go func() {
+	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
+	// 	defer func() {
+	// 		wg.Done()
+	// 		log.Println("Wrote:", path)
+	// 	}()
+	// 	if err := ingest.Save(path, ingest.Posts.GroupPostsByTag(true)); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }()
 
-	wg.Add(1)
-	go func() {
-		path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
-		defer func() {
-			wg.Done()
-			log.Println("Wrote:", path)
-		}()
-		if err := ingest.Save(path, ingest.Posts.FilterDistinctAuthors()); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	wg.Wait()
+	// // Writes a JSON file containing all posts:
+	// go func() {
+	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
+	// 	defer func() {
+	// 		wg.Done()
+	// 		log.Println("Wrote:", path)
+	// 	}()
+	// 	if err := ingest.Save(path, ingest.Posts.GetPostSummaries()); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }()
+	// wg.Wait()
 
-	authors := ingest.Posts.FilterDistinctAuthors()
-	wg.Add(len(authors))
-	for _, author := range authors {
-		path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, strings.ToLower(author.Username))
-		go func(author queries.Author) {
-			defer func() {
-				wg.Done()
-				log.Println("Wrote:", path)
-			}()
-			if err := ingest.Save(path, author); err != nil {
-				log.Fatal(err)
-			}
-		}(author)
-	}
-	wg.Wait()
+	// wg.Add(1)
+	// go func() {
+	// 	path := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
+	// 	defer func() {
+	// 		wg.Done()
+	// 		log.Println("Wrote:", path)
+	// 	}()
+	// 	if err := ingest.Save(path, ingest.Posts.FilterDistinctAuthors()); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }()
+	// wg.Wait()
+
+	// authors := ingest.Posts.FilterDistinctAuthors()
+	// wg.Add(len(authors))
+	// for _, author := range authors {
+	// 	path := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, strings.ToLower(author.Username))
+	// 	go func(author queries.Author) {
+	// 		defer func() {
+	// 			wg.Done()
+	// 			log.Println("Wrote:", path)
+	// 		}()
+	// 		if err := ingest.Save(path, author); err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 	}(author)
+	// }
+	// wg.Wait()
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package main
 
 /// move the bulk of this logic into the config constructor
+// reading time estimation as template func instead
 // implement proper logger
 // implement local saving of images
 // document
