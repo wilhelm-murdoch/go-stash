@@ -1,5 +1,12 @@
 package queries
 
+import (
+	"fmt"
+	"math"
+	"regexp"
+	"strings"
+)
+
 // Author
 type Author struct {
 	Username    string `json:"username"`
@@ -46,25 +53,36 @@ type Post struct {
 }
 
 type PostSummary struct {
-	Title      string `json:"title"`
-	Slug       string `json:"slug"`
-	Brief      string `json:"brief"`
-	CoverImage string `json:"coverImage"`
-	Username   string `json:"username"`
-	Name       string `json:"name"`
-	Photo      string `json:"photo"`
-	Tags       []Tag  `json:"tags,omitempty"`
+	Title       string `json:"title"`
+	Slug        string `json:"slug"`
+	Brief       string `json:"brief"`
+	CoverImage  string `json:"coverImage"`
+	ReadingTime string `json:"readingTime"`
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Photo       string `json:"photo"`
+	DateAdded   string `json:"dateAdded"`
+	Tags        []Tag  `json:"tags,omitempty"`
 }
 
 func NewPostSummary(p Post) PostSummary {
 	return PostSummary{
-		Title:      p.Title,
-		Slug:       p.Slug,
-		Brief:      p.Brief,
-		CoverImage: p.CoverImage,
-		Username:   p.Author.Username,
-		Name:       p.Author.Name,
-		Photo:      p.Author.Photo,
-		Tags:       p.Tags,
+		Title:       p.Title,
+		Slug:        p.Slug,
+		Brief:       p.Brief,
+		CoverImage:  p.CoverImage,
+		ReadingTime: EstimateReadingTime(p.ContentMarkdown),
+		Username:    p.Author.Username,
+		Name:        p.Author.Name,
+		Photo:       p.Author.Photo,
+		DateAdded:   p.DateAdded,
+		Tags:        p.Tags,
 	}
+}
+
+func EstimateReadingTime(text string) string {
+	pattern, _ := regexp.Compile(`[^a-zA-Z0-9\s]+`)
+	words := strings.Fields(pattern.ReplaceAllString(text, ""))
+
+	return fmt.Sprintf("%.0f mins", math.Ceil(float64(len(words))/float64(200)))
 }

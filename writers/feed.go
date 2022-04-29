@@ -2,6 +2,7 @@ package writers
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -42,31 +43,31 @@ func WriteFeeds(cfg *config.Configuration, items *collection.Collection[queries.
 		return false
 	})
 
-	rssFile, err := os.Create(fmt.Sprintf("%s/%s/rss.xml", cfg.Paths.Root, cfg.Paths.Feeds))
-	if err != nil {
-		return err
-	}
-	defer rssFile.Close()
-
 	rss, err := feed.ToRss()
 	if err != nil {
 		return err
 	}
-
-	rssFile.WriteString(rss)
-
-	atomFile, err := os.Create(fmt.Sprintf("%s/%s/atom.xml", cfg.Paths.Root, cfg.Paths.Feeds))
-	if err != nil {
-		return err
-	}
-	defer rssFile.Close()
 
 	atom, err := feed.ToAtom()
 	if err != nil {
 		return err
 	}
 
-	atomFile.WriteString(atom)
+	feeds := map[string]string{
+		"rss.xml":  rss,
+		"atom.xml": atom,
+	}
+
+	for k, v := range feeds {
+		file, err := os.Create(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Feeds, k))
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		file.WriteString(v)
+		log.Printf("wrote %s/%s/%s", cfg.Paths.Root, cfg.Paths.Feeds, k)
+	}
 
 	return nil
 }

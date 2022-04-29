@@ -32,7 +32,7 @@ type Configuration struct {
 		Tags      string `json:"tags" yaml:"tags"`
 		Templates string `json:"templates" yaml:"templates"`
 	} `json:"paths" yaml:"paths"`
-	Mappings []Mapping `json:"mappings" yaml:"mappings"`
+	Mappings []*Mapping `json:"mappings" yaml:"mappings"`
 }
 
 type Mapping struct {
@@ -41,7 +41,6 @@ type Mapping struct {
 	Input    string          `json:"input" yaml:"input"`
 	Output   string          `json:"output" yaml:"output"`
 	Partials []string        `json:"partials" yaml:"partials"`
-	Sources  []string        `json:"sources" yaml:"sources"`
 }
 
 // New
@@ -148,13 +147,13 @@ func (c *Configuration) validateMappings() error {
 		return fmt.Sprintf("%s/%s/%s", c.Paths.Root, c.Paths.Templates, fileName)
 	}
 
-	var indexDefined bool
+	var indexMappingDefined bool
 	for i1, mapping := range c.Mappings {
 		if mapping.Type == Index {
-			if indexDefined {
+			if indexMappingDefined {
 				return errors.New("only a single mapping of type `index` is allowed")
 			} else {
-				indexDefined = true
+				indexMappingDefined = true
 			}
 		}
 
@@ -162,18 +161,45 @@ func (c *Configuration) validateMappings() error {
 			return err
 		}
 
+		mapping.Input = templatePath(mapping.Input)
+
 		for i2, partial := range mapping.Partials {
 			if err := isPathValid(fmt.Sprintf("mappings[%d]partials[%d]", i1, i2), templatePath(partial)); err != nil {
 				return err
 			}
+
+			mapping.Partials[i2] = templatePath(partial)
 		}
 	}
 
-	if !indexDefined {
+	if !indexMappingDefined {
 		return errors.New("a single mapping of type `index` must be defined")
 	}
 
 	return nil
+}
+
+func (c *Configuration) GetIndexMapping() (mapping *Mapping, ok bool) {
+	mappings, ok := c.GetMappingByType(Index)
+	if !ok {
+		return mapping, ok
+	}
+
+	return mappings[0], true
+}
+
+func (c *Configuration) GetMappingByType(mappingType TemplateMapType) (mappings []*Mapping, ok bool) {
+	for _, mapping := range c.Mappings {
+		if mapping.Type == mappingType {
+			mappings = append(mappings, mapping)
+		}
+	}
+
+	if len(mappings) == 0 {
+		return mappings, ok
+	}
+
+	return mappings, true
 }
 
 func WrapWithConfig(c *cli.Context, action func(*cli.Context, *Configuration) error) error {

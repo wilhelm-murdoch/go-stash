@@ -2,7 +2,7 @@ title: "wilhelm codes"
 description: "I code here and do other things."
 url: "https://wilhelm.codes"
 feed_limit: 15
-
+author: "blitzkriegpunk"
 
 paths:
   root: "dist"
@@ -13,29 +13,23 @@ paths:
   templates: "templates"
 
 mappings:
-  - type: "article"
-    input: "article.tpl"
-    partials:
-      - "partials/header.tpl"
-      - "partials/footer.tpl"
-      - "partials/wrapper.tpl"
-  - type: "tag"
-    input: "tags.tpl"
-    output: "tags/index.html"
-    sources:
-      - "tags/index.json"
-    partials:
-      - "partials/header.tpl"
-      - "partials/footer.tpl"
-      - "partials/wrapper.tpl"
+  # - type: "article"
+  #   input: "article.tpl"
+  #   partials:
+  #     - "partials/head.tpl"
+  #     - "partials/footer.tpl"
+  # - type: "tag"
+  #   input: "tags.tpl"
+  #   output: "tags/index.html"
+  #   partials:
+  #     - "partials/head.tpl"
+  #     - "partials/footer.tpl"
   - type: "index"
     input: "index.tpl"
     output: "index.html"
-    sources:
-      - "tags/index.json"
-      - "articles/index.json"
-      - "authors/index.json"
     partials:
-      - "partials/header.tpl"
+      - "partials/head.tpl"
       - "partials/footer.tpl"
-      - "partials/wrapper.tpl"
+      - "partials/card.tpl"
+      - "partials/tags.tpl"
+      - "partials/summary.tpl"

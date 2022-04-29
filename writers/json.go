@@ -22,7 +22,7 @@ func Write[W Writable](basePath string, items []W, writeManifest bool) error {
 		if err := writeJson(basePath, items); err != nil {
 			return err
 		}
-		log.Printf("Wrote: %s/index.json\n", basePath)
+		log.Printf("wrote %s/index.json\n", basePath)
 		return nil
 	}
 
@@ -45,7 +45,7 @@ func Write[W Writable](basePath string, items []W, writeManifest bool) error {
 			path := fmt.Sprintf("%s/%s", basePath, slug)
 			defer func() {
 				wg.Done()
-				log.Printf("Wrote: %s/index.json\n", path)
+				log.Printf("wrote %s/index.json\n", path)
 			}()
 			if err := writeJson(path, item); err != nil {
 				log.Fatal(err)
