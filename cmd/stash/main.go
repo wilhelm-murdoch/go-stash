@@ -1,5 +1,6 @@
 package main
 
+// break up manfiest creation
 // implement proper logger
 // implement local saving of images
 // document

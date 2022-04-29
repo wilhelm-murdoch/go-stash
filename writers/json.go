@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/models"
 )
 
@@ -15,21 +16,21 @@ type Writable interface {
 	models.Author | models.Post | models.Tag
 }
 
-func Write[W Writable](basePath string, items []W, writeManifest bool) error {
-	wg := new(sync.WaitGroup)
-
-	if writeManifest {
-		if err := writeJson(basePath, items); err != nil {
-			return err
-		}
-		log.Printf("wrote %s/index.json\n", basePath)
-		return nil
+func WriteJsonManifest[W Writable](basePath string, items *collection.Collection[W]) error {
+	if err := writeJson(basePath, items.Items()); err != nil {
+		return err
 	}
+	log.Printf("wrote %s/index.json\n", basePath)
+	return nil
+}
+
+func WriteJsonBulk[W Writable](basePath string, items *collection.Collection[W]) error {
+	wg := new(sync.WaitGroup)
 
 	var slug string
 
-	wg.Add(len(items))
-	for _, item := range items {
+	wg.Add(items.Length())
+	items.Each(func(i int, item W) bool {
 		go func(item W) {
 			switch t := any(item).(type) {
 			case models.Author:
@@ -51,8 +52,9 @@ func Write[W Writable](basePath string, items []W, writeManifest bool) error {
 				log.Fatal(err)
 			}
 		}(item)
-	}
 
+		return false
+	})
 	wg.Wait()
 
 	return nil

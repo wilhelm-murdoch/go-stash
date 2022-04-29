@@ -68,25 +68,32 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	wg.Wait()
 
 	basePathPosts := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts)
-	if err := writers.Write(basePathPosts, ingest.Posts.Results().Items(), false); err != nil {
+	posts := ingest.Posts.Results()
+	if err := writers.WriteJsonBulk(basePathPosts, posts); err != nil {
+		return err
+	}
+
+	if err := writers.WriteJsonManifest(basePathPosts, posts); err != nil {
 		return err
 	}
 
 	basePathTags := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
-	if err := writers.Write(basePathTags, ingest.Posts.GroupPostsByTag(true), false); err != nil {
+	tags := ingest.Posts.GroupPostsByTag()
+	if err := writers.WriteJsonBulk(basePathTags, tags); err != nil {
 		return err
 	}
 
-	if err := writers.Write(basePathTags, ingest.Posts.GroupPostsByTag(true), true); err != nil {
+	if err := writers.WriteJsonManifest(basePathTags, tags); err != nil {
 		return err
 	}
 
 	basePathAuthors := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
-	if err := writers.Write(basePathAuthors, ingest.Posts.FilterDistinctAuthors(), false); err != nil {
+	authors := ingest.Posts.FilterDistinctAuthors()
+	if err := writers.WriteJsonBulk(basePathAuthors, authors); err != nil {
 		return err
 	}
 
-	if err := writers.Write(basePathAuthors, ingest.Posts.FilterDistinctAuthors(), true); err != nil {
+	if err := writers.WriteJsonManifest(basePathAuthors, authors); err != nil {
 		return err
 	}
 

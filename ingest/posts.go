@@ -10,30 +10,10 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/queries"
 )
 
-var (
-	Posts = &PostIngester{
-		client:  client.New(),
-		results: collection.New[models.Post](),
-	}
-
-	tagsContain = func(needle models.Tag, haystack []models.Tag) bool {
-		for _, tag := range haystack {
-			if needle.Slug == tag.Slug {
-				return true
-			}
-		}
-		return false
-	}
-
-	authorsContain = func(needle models.Author, haystack []models.Author) bool {
-		for _, tag := range haystack {
-			if needle.Username == tag.Username {
-				return true
-			}
-		}
-		return false
-	}
-)
+var Posts = &PostIngester{
+	client:  client.New(),
+	results: collection.New[models.Post](),
+}
 
 // PostIngester
 type PostIngester struct {
@@ -56,11 +36,6 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 	p.results.Push(result.(models.Post))
 }
 
-// Empty
-func (p *PostIngester) Empty() {
-	p.results.Empty()
-}
-
 // Length
 func (p *PostIngester) Length() int {
 	return p.results.Length()
@@ -72,54 +47,50 @@ func (p *PostIngester) Results() *collection.Collection[models.Post] {
 }
 
 // FilterDistinctAuthors
-func (p *PostIngester) FilterDistinctAuthors() []models.Author {
-	authors := make([]models.Author, 0)
+func (p *PostIngester) FilterDistinctAuthors() *collection.Collection[models.Author] {
+	authors := collection.New[models.Author]()
 
 	p.results.Each(func(i int, post models.Post) bool {
-
-		if !authorsContain(post.Author, authors) {
-			authors = append(authors, post.Author)
+		if found := authors.Contains(post.Author); !found {
+			authors.Push(post.Author)
 		}
-
 		return false
 	})
 
 	return authors
 }
 
-// FilterDistinctTags
-func (p *PostIngester) FilterDistinctTags() []models.Tag {
+// GroupPostsByTag
+func (p *PostIngester) GroupPostsByTag() *collection.Collection[models.Tag] {
 	tags := make([]models.Tag, 0)
+
+	contains := func(needle models.Tag, haystack []models.Tag) bool {
+		for _, tag := range haystack {
+			if needle.Slug == tag.Slug {
+				return true
+			}
+		}
+		return false
+	}
 
 	p.results.Each(func(i int, post models.Post) bool {
 		for _, tag := range post.Tags {
-			if !tagsContain(tag, tags) {
+			if !contains(tag, tags) {
 				tags = append(tags, tag)
 			}
 		}
-
 		return false
 	})
 
-	return tags
-}
-
-// GroupPostsByTag
-func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []models.Tag {
-	tags := p.FilterDistinctTags()
-
 	for i, tag := range tags {
 		p.results.Each(func(_ int, post models.Post) bool {
-			if tagsContain(tag, post.Tags) {
-				if includePostSummary {
-					tags[i].Posts = append(tags[i].Posts, post)
-				}
-
+			if contains(tag, post.Tags) {
+				tags[i].Posts = append(tags[i].Posts, post)
 				tags[i].Count++
 			}
 			return false
 		})
 	}
 
-	return tags
+	return collection.New(tags...)
 }
