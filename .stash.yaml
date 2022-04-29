@@ -7,14 +7,14 @@ author: "blitzkriegpunk"
 paths:
   root: "dist"
   feeds: "feeds"
-  articles: "articles"
+  posts: "posts"
   authors: "authors"
   tags: "tags"
   templates: "templates"
 
 mappings:
-  # - type: "article"
-  #   input: "article.tpl"
+  # - type: "post"
+  #   input: "post.tpl"
   #   partials:
   #     - "partials/head.tpl"
   #     - "partials/footer.tpl"

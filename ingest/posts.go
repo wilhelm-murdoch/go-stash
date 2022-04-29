@@ -6,16 +6,17 @@ import (
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/client"
+	"github.com/wilhelm-murdoch/go-stash/models"
 	"github.com/wilhelm-murdoch/go-stash/queries"
 )
 
 var (
 	Posts = &PostIngester{
 		client:  client.New(),
-		results: collection.New[queries.Post](),
+		results: collection.New[models.Post](),
 	}
 
-	tagsContain = func(needle queries.Tag, haystack []queries.Tag) bool {
+	tagsContain = func(needle models.Tag, haystack []models.Tag) bool {
 		for _, tag := range haystack {
 			if needle.Slug == tag.Slug {
 				return true
@@ -24,7 +25,7 @@ var (
 		return false
 	}
 
-	authorsContain = func(needle queries.Author, haystack []queries.Author) bool {
+	authorsContain = func(needle models.Author, haystack []models.Author) bool {
 		for _, tag := range haystack {
 			if needle.Username == tag.Username {
 				return true
@@ -37,7 +38,7 @@ var (
 // PostIngester
 type PostIngester struct {
 	client  *client.Client
-	results *collection.Collection[queries.Post]
+	results *collection.Collection[models.Post]
 }
 
 // Get
@@ -50,9 +51,9 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 		return
 	}
 
-	log.Printf("Processed Article: %s\n", slug)
+	log.Printf("processed post: %s\n", slug)
 
-	p.results.Push(result.(queries.Post))
+	p.results.Push(result.(models.Post))
 }
 
 // Empty
@@ -66,27 +67,15 @@ func (p *PostIngester) Length() int {
 }
 
 // Results
-func (p *PostIngester) Results() *collection.Collection[queries.Post] {
+func (p *PostIngester) Results() *collection.Collection[models.Post] {
 	return p.results
 }
 
-// GetPostSummaries
-func (p *PostIngester) GetPostSummaries() []queries.PostSummary {
-	posts := make([]queries.PostSummary, 0)
-
-	p.results.Each(func(i int, post queries.Post) bool {
-		posts = append(posts, queries.NewPostSummary(post))
-		return false
-	})
-
-	return posts
-}
-
 // FilterDistinctAuthors
-func (p *PostIngester) FilterDistinctAuthors() []queries.Author {
-	authors := make([]queries.Author, 0)
+func (p *PostIngester) FilterDistinctAuthors() []models.Author {
+	authors := make([]models.Author, 0)
 
-	p.results.Each(func(i int, post queries.Post) bool {
+	p.results.Each(func(i int, post models.Post) bool {
 
 		if !authorsContain(post.Author, authors) {
 			authors = append(authors, post.Author)
@@ -99,10 +88,10 @@ func (p *PostIngester) FilterDistinctAuthors() []queries.Author {
 }
 
 // FilterDistinctTags
-func (p *PostIngester) FilterDistinctTags() []queries.Tag {
-	tags := make([]queries.Tag, 0)
+func (p *PostIngester) FilterDistinctTags() []models.Tag {
+	tags := make([]models.Tag, 0)
 
-	p.results.Each(func(i int, post queries.Post) bool {
+	p.results.Each(func(i int, post models.Post) bool {
 		for _, tag := range post.Tags {
 			if !tagsContain(tag, tags) {
 				tags = append(tags, tag)
@@ -116,14 +105,14 @@ func (p *PostIngester) FilterDistinctTags() []queries.Tag {
 }
 
 // GroupPostsByTag
-func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []queries.Tag {
+func (p *PostIngester) GroupPostsByTag(includePostSummary bool) []models.Tag {
 	tags := p.FilterDistinctTags()
 
 	for i, tag := range tags {
-		p.results.Each(func(_ int, post queries.Post) bool {
+		p.results.Each(func(_ int, post models.Post) bool {
 			if tagsContain(tag, post.Tags) {
 				if includePostSummary {
-					tags[i].Posts = append(tags[i].Posts, queries.NewPostSummary(post))
+					tags[i].Posts = append(tags[i].Posts, post)
 				}
 
 				tags[i].Count++

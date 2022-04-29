@@ -3,6 +3,8 @@ package queries
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/wilhelm-murdoch/go-stash/models"
 )
 
 type PostError struct {
@@ -21,7 +23,7 @@ var (
 		}
 
 		// { "data": { "post": { ... } } }
-		var results map[string]map[string]Post
+		var results map[string]map[string]models.Post
 		if err := json.Unmarshal(bytes, &results); err != nil {
 			return nil, err
 		}
@@ -31,7 +33,7 @@ var (
 
 	TimelineUnmarshaler = func(bytes []byte) (any, error) {
 		// { "data": { "user": { "publication": { "posts": [ ... ] } } } }
-		var results map[string]map[string]map[string]map[string][]Post
+		var results map[string]map[string]map[string]map[string][]models.Post
 		if err := json.Unmarshal(bytes, &results); err != nil {
 			return nil, err
 		}

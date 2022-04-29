@@ -9,10 +9,10 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/config"
-	"github.com/wilhelm-murdoch/go-stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/models"
 )
 
-func WriteFeeds(cfg *config.Configuration, items *collection.Collection[queries.Post]) error {
+func WriteFeeds(cfg *config.Configuration, items *collection.Collection[models.Post]) error {
 	feed := &feeds.Feed{
 		Title:       cfg.Title,
 		Link:        &feeds.Link{Href: cfg.Url},
@@ -28,7 +28,7 @@ func WriteFeeds(cfg *config.Configuration, items *collection.Collection[queries.
 		rDate, _ := time.Parse(time.RFC3339, r.DateAdded)
 
 		return lDate.Unix() > rDate.Unix()
-	}).Slice(0, cfg.FeedLimit).Each(func(i int, p queries.Post) bool {
+	}).Slice(0, cfg.FeedLimit).Each(func(i int, p models.Post) bool {
 		dateAdded, _ := time.Parse(time.RFC3339, p.DateAdded)
 		dateUpdated, _ := time.Parse(time.RFC3339, p.DateUpdated)
 

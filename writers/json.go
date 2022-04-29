@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wilhelm-murdoch/go-stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/models"
 )
 
 type Writable interface {
-	queries.Author | queries.Post | queries.Tag | queries.PostSummary
+	models.Author | models.Post | models.Tag
 }
 
 func Write[W Writable](basePath string, items []W, writeManifest bool) error {
@@ -32,11 +32,11 @@ func Write[W Writable](basePath string, items []W, writeManifest bool) error {
 	for _, item := range items {
 		go func(item W) {
 			switch t := any(item).(type) {
-			case queries.Author:
+			case models.Author:
 				slug = strings.ToLower(t.Username)
-			case queries.Tag:
+			case models.Tag:
 				slug = t.Slug
-			case queries.Post:
+			case models.Post:
 				slug = t.Slug
 			default:
 				log.Fatal("could not determine slug")

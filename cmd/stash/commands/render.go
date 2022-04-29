@@ -12,12 +12,12 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/config"
-	"github.com/wilhelm-murdoch/go-stash/queries"
+	"github.com/wilhelm-murdoch/go-stash/models"
 	"github.com/wilhelm-murdoch/go-stash/writers"
 )
 
 type Unmarshalable interface {
-	queries.Author | queries.Post | queries.Tag | queries.PostSummary
+	models.Author | models.Post | models.Tag
 }
 
 func UnmarshalWalkIntoCollection[U Unmarshalable](basePath string) (*collection.Collection[U], error) {
@@ -70,32 +70,26 @@ func UnmarshalFileIntoCollection[U Unmarshalable](fullPath string) (*collection.
 }
 
 func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
-	log.Println("unmarshaling articles from local json store")
-	articles, err := UnmarshalWalkIntoCollection[queries.Post](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles))
+	log.Println("unmarshaling posts from local json store")
+	posts, err := UnmarshalWalkIntoCollection[models.Post](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts))
 	if err != nil {
-		return fmt.Errorf("could not unmarshal articles from local store: %s", err)
-	}
-
-	log.Println("unmarshaling article summaries from local json store")
-	articleSummary, err := UnmarshalFileIntoCollection[queries.PostSummary](fmt.Sprintf("%s/%s/index.json", cfg.Paths.Root, cfg.Paths.Articles))
-	if err != nil {
-		return fmt.Errorf("could not unmarshal article summaries from local store: %s", err)
+		return fmt.Errorf("could not unmarshal posts from local store: %s", err)
 	}
 
 	log.Println("unmarshaling tags from local json store")
-	tags, err := UnmarshalWalkIntoCollection[queries.Tag](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags))
+	tags, err := UnmarshalWalkIntoCollection[models.Tag](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal tags from local store: %s", err)
 	}
 
 	log.Println("unmarshaling authors from local json store")
-	authors, err := UnmarshalWalkIntoCollection[queries.Author](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors))
+	authors, err := UnmarshalWalkIntoCollection[models.Author](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal authors from local store: %s", err)
 	}
 
 	log.Println("rendering rss and atom feeds")
-	if err := writers.WriteFeeds(cfg, articles); err != nil {
+	if err := writers.WriteFeeds(cfg, posts); err != nil {
 		return fmt.Errorf("failed to write feeds at `%s`: %s", fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Feeds), err)
 	}
 
@@ -106,7 +100,7 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 
 	indexData := map[string]any{
 		"config":  cfg,
-		"summary": articleSummary.Items(),
+		"posts":   posts.Items(),
 		"tags":    tags.Items(),
 		"authors": authors.Items(),
 	}

@@ -12,11 +12,11 @@ import (
 type TemplateMapType string
 
 const (
-	Tag     TemplateMapType = "tag"
-	Article TemplateMapType = "article"
-	Author  TemplateMapType = "author"
-	Page    TemplateMapType = "page"
-	Index   TemplateMapType = "index"
+	Tag    TemplateMapType = "tag"
+	Post   TemplateMapType = "post"
+	Author TemplateMapType = "author"
+	Page   TemplateMapType = "page"
+	Index  TemplateMapType = "index"
 )
 
 type Configuration struct {
@@ -27,7 +27,7 @@ type Configuration struct {
 	Paths       struct {
 		Root      string `json:"root" yaml:"root"`
 		Feeds     string `json:"feeds" yaml:"feeds"`
-		Articles  string `json:"articles" yaml:"articles"`
+		Posts     string `json:"posts" yaml:"posts"`
 		Authors   string `json:"authors" yaml:"authors"`
 		Tags      string `json:"tags" yaml:"tags"`
 		Templates string `json:"templates" yaml:"templates"`
@@ -113,7 +113,7 @@ func (c *Configuration) validatePathsBlock() error {
 	}
 
 	checks := map[string]string{
-		"paths.articles":  fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Articles),
+		"paths.posts":     fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Posts),
 		"paths.tags":      fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Tags),
 		"paths.authors":   fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Authors),
 		"paths.templates": fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Templates),

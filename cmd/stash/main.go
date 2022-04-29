@@ -1,6 +1,5 @@
 package main
 
-// decide on post or article
 // implement proper logger
 // implement local saving of images
 // document

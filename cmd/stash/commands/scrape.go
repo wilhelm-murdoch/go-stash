@@ -10,6 +10,7 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/client"
 	"github.com/wilhelm-murdoch/go-stash/config"
 	"github.com/wilhelm-murdoch/go-stash/ingest"
+	"github.com/wilhelm-murdoch/go-stash/models"
 	"github.com/wilhelm-murdoch/go-stash/queries"
 	"github.com/wilhelm-murdoch/go-stash/writers"
 )
@@ -42,22 +43,22 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 			return err
 		}
 
-		if len(result.([]queries.Post)) == 0 {
-			log.Println("Done paging.")
+		if len(result.([]models.Post)) == 0 {
+			log.Println("done paging")
 			break
 		}
-		log.Printf("Searching Page: %d\n", currentPage+1)
+		log.Printf("searching page: %d\n", currentPage+1)
 
 		// Search publication for any posts that have been added, or updated,
 		// between now and `since`. All results are sent to the post ingestion
 		// handler:
-		for _, post := range result.([]queries.Post) {
+		for _, post := range result.([]models.Post) {
 			dateAdded, _ := time.Parse(time.RFC3339, post.DateAdded)
 			dateUpdated, _ := time.Parse(time.RFC3339, post.DateUpdated)
 
 			if dateAdded.After(since) || dateUpdated.After(since) {
 				wg.Add(1)
-				log.Printf("Found Article: %s", post.Slug)
+				log.Printf("found post: %s", post.Slug)
 				go ingest.Posts.Get(post.Slug, c.String("hostname"), wg)
 			}
 		}
@@ -66,12 +67,8 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	}
 	wg.Wait()
 
-	basePathArticles := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Articles)
-	if err := writers.Write(basePathArticles, ingest.Posts.Results().Items(), false); err != nil {
-		return err
-	}
-
-	if err := writers.Write(basePathArticles, ingest.Posts.GetPostSummaries(), true); err != nil {
+	basePathPosts := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts)
+	if err := writers.Write(basePathPosts, ingest.Posts.Results().Items(), false); err != nil {
 		return err
 	}
 
