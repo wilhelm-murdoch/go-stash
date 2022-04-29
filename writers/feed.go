@@ -20,15 +20,7 @@ func WriteFeeds(cfg *config.Configuration, items *collection.Collection[models.P
 		Created:     time.Now(),
 	}
 
-	items.Sort(func(i, j int) bool {
-		l, _ := items.At(i)
-		r, _ := items.At(j)
-
-		lDate, _ := time.Parse(time.RFC3339, l.DateAdded)
-		rDate, _ := time.Parse(time.RFC3339, r.DateAdded)
-
-		return lDate.Unix() > rDate.Unix()
-	}).Slice(0, cfg.FeedLimit).Each(func(i int, p models.Post) bool {
+	items.Slice(0, cfg.FeedLimit).Each(func(i int, p models.Post) bool {
 		dateAdded, _ := time.Parse(time.RFC3339, p.DateAdded)
 		dateUpdated, _ := time.Parse(time.RFC3339, p.DateUpdated)
 

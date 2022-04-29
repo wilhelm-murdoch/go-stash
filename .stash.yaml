@@ -13,17 +13,16 @@ paths:
   templates: "templates"
 
 mappings:
-  # - type: "post"
-  #   input: "post.tpl"
-  #   partials:
-  #     - "partials/head.tpl"
-  #     - "partials/footer.tpl"
-  # - type: "tag"
-  #   input: "tags.tpl"
-  #   output: "tags/index.html"
-  #   partials:
-  #     - "partials/head.tpl"
-  #     - "partials/footer.tpl"
+  - type: "post"
+    input: "post.tpl"
+    partials:
+      - "partials/head.tpl"
+      - "partials/footer.tpl"
+  - type: "tag"
+    input: "tag.tpl"
+    partials:
+      - "partials/head.tpl"
+      - "partials/footer.tpl"
   - type: "index"
     input: "index.tpl"
     output: "index.html"

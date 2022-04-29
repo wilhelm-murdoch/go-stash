@@ -2,12 +2,12 @@ package commands
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/urfave/cli/v2"
 	"github.com/wilhelm-murdoch/go-collection"
@@ -47,34 +47,22 @@ func UnmarshalWalkIntoCollection[U Unmarshalable](basePath string) (*collection.
 	return items, err
 }
 
-func UnmarshalFileIntoCollection[U Unmarshalable](fullPath string) (*collection.Collection[U], error) {
-	items := collection.New[U]()
-
-	content, err := ioutil.ReadFile(fullPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var item []U
-	if err := json.Unmarshal(content, &item); err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal `%s`: %s", fullPath, err)
-	}
-
-	items.Push(item...)
-
-	return items, nil
-}
-
 func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 	log.Println("unmarshaling posts from local json store")
 	posts, err := UnmarshalWalkIntoCollection[models.Post](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal posts from local store: %s", err)
 	}
+
+	posts.Sort(func(i, j int) bool {
+		l, _ := posts.At(i)
+		r, _ := posts.At(j)
+
+		lDate, _ := time.Parse(time.RFC3339, l.DateAdded)
+		rDate, _ := time.Parse(time.RFC3339, r.DateAdded)
+
+		return lDate.Unix() > rDate.Unix()
+	})
 
 	log.Println("unmarshaling tags from local json store")
 	tags, err := UnmarshalWalkIntoCollection[models.Tag](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags))
@@ -93,43 +81,31 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 		return fmt.Errorf("failed to write feeds at `%s`: %s", fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Feeds), err)
 	}
 
-	indexMapping, ok := cfg.GetIndexMapping()
-	if !ok {
-		return errors.New("a single mapping of type `index` must be defined")
-	}
-
-	indexData := map[string]any{
-		"config":  cfg,
+	data := map[string]any{
 		"posts":   posts.Items(),
 		"tags":    tags.Items(),
 		"authors": authors.Items(),
 	}
 
-	log.Println("rendering index mapping to html")
-	if err := writers.WriteHtmlSingle(indexMapping, indexData, cfg); err != nil {
-		return fmt.Errorf("could not render index mapping: %s", err)
+	for _, mapping := range cfg.Mappings {
+		log.Printf("rendering `%s` mapping to html", mapping.Type)
+		switch mapping.Type {
+		case config.Index:
+			if err := writers.WriteHtml(fmt.Sprintf("%s/%s", cfg.Paths.Root, mapping.Output), mapping, data, cfg); err != nil {
+				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
+			}
+		case config.Post:
+			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts), posts, mapping, data, cfg); err != nil {
+				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
+			}
+		case config.Tag:
+			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), tags, mapping, data, cfg); err != nil {
+				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
+			}
+		default:
+			log.Printf("mapping type `%s` is currently not supported", mapping.Type)
+		}
 	}
-
-	// articles.Each(func(i int, p queries.Post) bool {
-	// 	f, err := os.Create(fmt.Sprintf("%s/%s/%s/index.html", cfg.Paths.Root, cfg.Paths.Articles, p.Slug))
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 		return true
-	// 	}
-	// 	defer f.Close()
-
-	// 	data["article"] = p
-
-	// 	var buffer strings.Builder
-	// 	if err := templates.ExecuteTemplate(&buffer, "article", data); err != nil {
-	// 		log.Println(err)
-	// 		return true
-	// 	}
-
-	// 	f.WriteString(buffer.String())
-
-	// 	return false
-	// })
 
 	return nil
 }

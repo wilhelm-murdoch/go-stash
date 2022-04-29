@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/models"
+	"github.com/wilhelm-murdoch/go-stash/utils"
 )
 
 type Writable interface {
@@ -20,39 +20,24 @@ func WriteJsonManifest[W Writable](basePath string, items *collection.Collection
 	if err := writeJson(basePath, items.Items()); err != nil {
 		return err
 	}
-	log.Printf("wrote %s/index.json\n", basePath)
 	return nil
 }
 
 func WriteJsonBulk[W Writable](basePath string, items *collection.Collection[W]) error {
-	wg := new(sync.WaitGroup)
+	var wg sync.WaitGroup
 
-	var slug string
+	write := func(item W) {
+		defer wg.Done()
+		if slug, err := utils.GetSlugFromItem(item); err == nil {
+			if err := writeJson(fmt.Sprintf("%s/%s", basePath, slug), item); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 
 	wg.Add(items.Length())
 	items.Each(func(i int, item W) bool {
-		go func(item W) {
-			switch t := any(item).(type) {
-			case models.Author:
-				slug = strings.ToLower(t.Username)
-			case models.Tag:
-				slug = t.Slug
-			case models.Post:
-				slug = t.Slug
-			default:
-				log.Fatal("could not determine slug")
-			}
-
-			path := fmt.Sprintf("%s/%s", basePath, slug)
-			defer func() {
-				wg.Done()
-				log.Printf("wrote %s/index.json\n", path)
-			}()
-			if err := writeJson(path, item); err != nil {
-				log.Fatal(err)
-			}
-		}(item)
-
+		go write(item)
 		return false
 	})
 	wg.Wait()
@@ -70,7 +55,10 @@ func writeJson(path string, object any) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		log.Printf("wrote %s/index.json\n", path)
+		file.Close()
+	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetEscapeHTML(false)
