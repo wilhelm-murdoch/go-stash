@@ -1,6 +1,6 @@
 package main
 
-// break up manfiest creation
+// multiple index types? for static pages?
 // implement proper logger
 // implement local saving of images
 // document

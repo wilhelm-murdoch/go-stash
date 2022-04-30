@@ -13,3 +13,7 @@ type Post struct {
 	Tags        []Tag  `json:"tags,omitempty"`
 	Author      Author
 }
+
+func (p Post) GetSlug() string {
+	return p.Slug
+}

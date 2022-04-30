@@ -81,25 +81,25 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 		return fmt.Errorf("failed to write feeds at `%s`: %s", fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Feeds), err)
 	}
 
-	data := map[string]any{
-		"posts":   posts.Items(),
-		"tags":    tags.Items(),
-		"authors": authors.Items(),
+	data := []models.TemplateData{
+		{Name: "posts", Data: posts.Items()},
+		{Name: "tags", Data: tags.Items()},
+		{Name: "authors", Data: authors.Items()},
 	}
 
 	for _, mapping := range cfg.Mappings {
 		log.Printf("rendering `%s` mapping to html", mapping.Type)
 		switch mapping.Type {
 		case config.Index:
-			if err := writers.WriteHtml(fmt.Sprintf("%s/%s", cfg.Paths.Root, mapping.Output), mapping, data, cfg); err != nil {
+			if err := writers.WriteHtml(fmt.Sprintf("%s/%s", cfg.Paths.Root, mapping.Output), mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
 			}
 		case config.Post:
-			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts), posts, mapping, data, cfg); err != nil {
+			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts), posts, mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
 			}
 		case config.Tag:
-			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), tags, mapping, data, cfg); err != nil {
+			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), tags, mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render `%s` mapping: %s", mapping.Type, err)
 			}
 		default:

@@ -1,5 +1,14 @@
 package models
 
+import "strings"
+
+type Sluggable interface {
+	GetSlug() string
+}
+
+type Imageable interface {
+}
+
 type Author struct {
 	Username    string `json:"username"`
 	Name        string `json:"name"`
@@ -15,4 +24,8 @@ type Author struct {
 		Website       string `json:"website"`
 		Facebook      string `json:"facebook"`
 	} `json:"socialMedia"`
+}
+
+func (a Author) GetSlug() string {
+	return strings.ToLower(a.Username)
 }

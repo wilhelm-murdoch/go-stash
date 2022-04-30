@@ -130,6 +130,7 @@ func (c *Configuration) validatePathsBlock() error {
 	return nil
 }
 
+// validateMappings
 func (c *Configuration) validateMappings() error {
 	isPathValid := func(label, path string) error {
 		stats, err := os.Stat(path)
@@ -151,11 +152,7 @@ func (c *Configuration) validateMappings() error {
 	var indexMappingDefined bool
 	for i1, mapping := range c.Mappings {
 		if mapping.Type == Index {
-			if indexMappingDefined {
-				return errors.New("only a single mapping of type `index` is allowed")
-			} else {
-				indexMappingDefined = true
-			}
+			indexMappingDefined = true
 		}
 
 		if err := isPathValid(fmt.Sprintf("mappings[%d]input", i1), templatePath(mapping.Input)); err != nil {
@@ -180,6 +177,7 @@ func (c *Configuration) validateMappings() error {
 	return nil
 }
 
+// GetFirstMappingByType
 func (c *Configuration) GetFirstMappingByType(mappingType TemplateMapType) (mapping *Mapping, ok bool) {
 	mappings, ok := c.GetMappingsByType(mappingType)
 	if !ok {
@@ -189,6 +187,7 @@ func (c *Configuration) GetFirstMappingByType(mappingType TemplateMapType) (mapp
 	return mappings[0], true
 }
 
+// GetMappingsByType
 func (c *Configuration) GetMappingsByType(mappingType TemplateMapType) (mappings []*Mapping, ok bool) {
 	for _, mapping := range c.Mappings {
 		if mapping.Type == mappingType {
@@ -203,6 +202,7 @@ func (c *Configuration) GetMappingsByType(mappingType TemplateMapType) (mappings
 	return mappings, true
 }
 
+// WrapWithConfig
 func WrapWithConfig(c *cli.Context, action func(*cli.Context, *Configuration) error) error {
 	config, err := New(c.String("config"))
 	if err != nil {

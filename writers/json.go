@@ -9,34 +9,27 @@ import (
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/models"
-	"github.com/wilhelm-murdoch/go-stash/utils"
 )
 
-type Writable interface {
-	models.Author | models.Post | models.Tag
-}
-
-func WriteJsonManifest[W Writable](basePath string, items *collection.Collection[W]) error {
+func WriteJsonManifest[S models.Sluggable](basePath string, items *collection.Collection[S]) error {
 	if err := writeJson(basePath, items.Items()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WriteJsonBulk[W Writable](basePath string, items *collection.Collection[W]) error {
+func WriteJsonBulk[S models.Sluggable](basePath string, items *collection.Collection[S]) error {
 	var wg sync.WaitGroup
 
-	write := func(item W) {
+	write := func(item S) {
 		defer wg.Done()
-		if slug, err := utils.GetSlugFromItem(item); err == nil {
-			if err := writeJson(fmt.Sprintf("%s/%s", basePath, slug), item); err != nil {
-				log.Fatal(err)
-			}
+		if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), item); err != nil {
+			log.Fatal(err)
 		}
 	}
 
 	wg.Add(items.Length())
-	items.Each(func(i int, item W) bool {
+	items.Each(func(i int, item S) bool {
 		go write(item)
 		return false
 	})

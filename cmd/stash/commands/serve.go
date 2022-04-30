@@ -8,7 +8,7 @@ import (
 )
 
 func ServeHandler(c *cli.Context, cfg *config.Configuration) error {
-	http.Handle("/", http.FileServer(http.Dir("./dist")))
+	http.Handle("/", http.FileServer(http.Dir("dist")))
 	http.ListenAndServe(":3000", nil)
 	return nil
 }
