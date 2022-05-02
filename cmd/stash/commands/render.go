@@ -16,12 +16,8 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/writers"
 )
 
-type Unmarshalable interface {
-	models.Author | models.Post | models.Tag
-}
-
-func UnmarshalWalkIntoCollection[U Unmarshalable](basePath string) (*collection.Collection[U], error) {
-	items := collection.New[U]()
+func UnmarshalWalkIntoCollection[B models.Bloggable](basePath string) (*collection.Collection[B], error) {
+	items := collection.New[B]()
 
 	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 		if fmt.Sprintf("%s/index.json", basePath) != path && err == nil && info.Name() == "index.json" {
@@ -30,7 +26,7 @@ func UnmarshalWalkIntoCollection[U Unmarshalable](basePath string) (*collection.
 				return err
 			}
 
-			var item U
+			var item B
 			if err := json.Unmarshal(content, &item); err != nil {
 				return err
 			}

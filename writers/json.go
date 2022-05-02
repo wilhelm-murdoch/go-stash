@@ -11,17 +11,17 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/models"
 )
 
-func WriteJsonManifest[S models.Sluggable](basePath string, items *collection.Collection[S]) error {
+func WriteJsonManifest[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
 	if err := writeJson(basePath, items.Items()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WriteJsonBulk[S models.Sluggable](basePath string, items *collection.Collection[S]) error {
+func WriteJsonBulk[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
 	var wg sync.WaitGroup
 
-	write := func(item S) {
+	write := func(item B) {
 		defer wg.Done()
 		if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), item); err != nil {
 			log.Fatal(err)
@@ -29,7 +29,7 @@ func WriteJsonBulk[S models.Sluggable](basePath string, items *collection.Collec
 	}
 
 	wg.Add(items.Length())
-	items.Each(func(i int, item S) bool {
+	items.Each(func(i int, item B) bool {
 		go write(item)
 		return false
 	})

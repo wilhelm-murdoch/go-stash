@@ -2,13 +2,6 @@ package models
 
 import "strings"
 
-type Sluggable interface {
-	GetSlug() string
-}
-
-type Imageable interface {
-}
-
 type Author struct {
 	Username    string `json:"username"`
 	Name        string `json:"name"`

@@ -20,8 +20,8 @@ func WriteHtml(basePath string, mapping *config.Mapping, cfg *config.Configurati
 	return nil
 }
 
-func WriteHtmlCollection[S models.Sluggable](basePath string, items *collection.Collection[S], mapping *config.Mapping, cfg *config.Configuration, data ...models.TemplateData) error {
-	items.Each(func(i int, item S) bool {
+func WriteHtmlCollection[B models.Bloggable](basePath string, items *collection.Collection[B], mapping *config.Mapping, cfg *config.Configuration, data ...models.TemplateData) error {
+	items.Each(func(i int, item B) bool {
 		data = append(data, models.TemplateData{Name: string(mapping.Type), Data: item})
 
 		if err := WriteHtml(fmt.Sprintf("%s/%s/index.html", basePath, item.GetSlug()), mapping, cfg, data...); err != nil {

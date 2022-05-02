@@ -177,31 +177,6 @@ func (c *Configuration) validateMappings() error {
 	return nil
 }
 
-// GetFirstMappingByType
-func (c *Configuration) GetFirstMappingByType(mappingType TemplateMapType) (mapping *Mapping, ok bool) {
-	mappings, ok := c.GetMappingsByType(mappingType)
-	if !ok {
-		return mapping, ok
-	}
-
-	return mappings[0], true
-}
-
-// GetMappingsByType
-func (c *Configuration) GetMappingsByType(mappingType TemplateMapType) (mappings []*Mapping, ok bool) {
-	for _, mapping := range c.Mappings {
-		if mapping.Type == mappingType {
-			mappings = append(mappings, mapping)
-		}
-	}
-
-	if len(mappings) == 0 {
-		return mappings, ok
-	}
-
-	return mappings, true
-}
-
 // WrapWithConfig
 func WrapWithConfig(c *cli.Context, action func(*cli.Context, *Configuration) error) error {
 	config, err := New(c.String("config"))
