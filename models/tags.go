@@ -1,5 +1,7 @@
 package models
 
+import "github.com/wilhelm-murdoch/go-stash/config"
+
 type Tag struct {
 	Name  string `json:"name"`
 	Slug  string `json:"slug"`
@@ -9,4 +11,8 @@ type Tag struct {
 
 func (t Tag) GetSlug() string {
 	return t.Slug
+}
+
+func (t Tag) GetImages(cfg *config.Configuration) []Image {
+	return nil
 }

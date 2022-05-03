@@ -1,11 +1,12 @@
 package main
 
 // multiple index types? for static pages?
+// batch processor for file downloads
 // implement proper logger
-// implement local saving of images
 // document
 // test
 // examples... maybe?
+// move image processing closer to structs
 
 import (
 	"fmt"

@@ -1,6 +1,12 @@
 package models
 
-import "strings"
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/wilhelm-murdoch/go-stash/config"
+)
 
 type Author struct {
 	Username    string `json:"username"`
@@ -21,4 +27,20 @@ type Author struct {
 
 func (a Author) GetSlug() string {
 	return strings.ToLower(a.Username)
+}
+
+func (a Author) GetImages(cfg *config.Configuration) []Image {
+	var images []Image
+
+	destination := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, a.GetSlug())
+
+	if a.CoverImage != "" {
+		images = append(images, Image{a.CoverImage, fmt.Sprintf("%s/%s", destination, filepath.Base(a.CoverImage))})
+	}
+
+	if a.Photo != "" {
+		images = append(images, Image{a.Photo, fmt.Sprintf("%s/%s", destination, filepath.Base(a.Photo))})
+	}
+
+	return images
 }

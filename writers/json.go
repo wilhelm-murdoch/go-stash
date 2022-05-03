@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/models"
+	"golang.org/x/sync/errgroup"
 )
 
 func WriteJsonManifest[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
@@ -19,21 +19,22 @@ func WriteJsonManifest[B models.Bloggable](basePath string, items *collection.Co
 }
 
 func WriteJsonBulk[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
-	var wg sync.WaitGroup
+	errors := new(errgroup.Group)
 
-	write := func(item B) {
-		defer wg.Done()
-		if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), item); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	wg.Add(items.Length())
 	items.Each(func(i int, item B) bool {
-		go write(item)
+		errors.Go(func() error {
+			if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), item); err != nil {
+				return err
+			}
+			return nil
+		})
+
 		return false
 	})
-	wg.Wait()
+
+	if err := errors.Wait(); err != nil {
+		return err
+	}
 
 	return nil
 }

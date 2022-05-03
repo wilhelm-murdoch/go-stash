@@ -9,6 +9,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/wilhelm-murdoch/go-stash/config"
+	"github.com/wilhelm-murdoch/go-stash/utils"
 )
 
 type Template struct {
@@ -45,7 +46,12 @@ func (t *Template) mapData() map[string]any {
 }
 
 func (t *Template) Save(basePath string) error {
-	templates, err := template.New("").Funcs(sprig.FuncMap()).ParseFiles(t.Partials...)
+	funcMap := sprig.FuncMap()
+
+	funcMap["Unescape"] = utils.Unescape
+	funcMap["EstimateReadingTime"] = utils.EstimateReadingTime
+
+	templates, err := template.New("").Funcs(funcMap).ParseFiles(t.Partials...)
 	if err != nil {
 		return err
 	}

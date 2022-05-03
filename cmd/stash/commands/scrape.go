@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/client"
 	"github.com/wilhelm-murdoch/go-stash/config"
 	"github.com/wilhelm-murdoch/go-stash/ingest"
@@ -66,6 +67,18 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 		currentPage++
 	}
 	wg.Wait()
+
+	images := collection.New[models.Image]()
+
+	ingest.Posts.Results().Each(func(i int, p models.Post) bool {
+		images.Push(p.GetImages(cfg)...)
+		images.PushDistinct(p.Author.GetImages(cfg)...)
+		return false
+	})
+
+	if err := writers.WriteFileCollection(images); err != nil {
+		return err
+	}
 
 	basePathPosts := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts)
 	posts := ingest.Posts.Results()
