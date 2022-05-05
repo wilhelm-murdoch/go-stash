@@ -1,4 +1,4 @@
-package models
+package template
 
 import (
 	"html/template"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/wilhelm-murdoch/go-stash/config"
-	"github.com/wilhelm-murdoch/go-stash/utils"
 )
 
 type Template struct {
@@ -25,7 +24,7 @@ type TemplateData struct {
 	Data any
 }
 
-func NewTemplateFromMapping(mapping *config.Mapping, data ...TemplateData) *Template {
+func NewFromMapping(mapping *config.Mapping, data ...TemplateData) *Template {
 	return &Template{
 		Name:     strings.TrimSuffix(filepath.Base(mapping.Input), filepath.Ext(mapping.Input)),
 		Input:    mapping.Input,
@@ -48,8 +47,9 @@ func (t *Template) mapData() map[string]any {
 func (t *Template) Save(basePath string) error {
 	funcMap := sprig.FuncMap()
 
-	funcMap["Unescape"] = utils.Unescape
-	funcMap["EstimateReadingTime"] = utils.EstimateReadingTime
+	for name, fn := range funcMapStash {
+		funcMap[name] = fn
+	}
 
 	templates, err := template.New("").Funcs(funcMap).ParseFiles(t.Partials...)
 	if err != nil {

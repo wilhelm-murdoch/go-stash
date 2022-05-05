@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/gorilla/feeds v1.1.1
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli/v2 v2.5.1
 	github.com/wilhelm-murdoch/go-collection v1.0.8

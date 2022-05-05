@@ -25,6 +25,7 @@ type Configuration struct {
 	Url         string `json:"url" yaml:"url"`
 	FeedLimit   int    `json:"feedLimit" yaml:"feed_limit"`
 	Author      string `json:"author" yaml:"author"`
+	ServePort   int    `json:"servePort" yaml:"servePort"`
 	Paths       struct {
 		Root      string `json:"root" yaml:"root"`
 		Feeds     string `json:"feeds" yaml:"feeds"`

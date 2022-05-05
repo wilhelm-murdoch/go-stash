@@ -23,7 +23,7 @@ func WriteJsonBulk[B models.Bloggable](basePath string, items *collection.Collec
 
 	items.Each(func(i int, item B) bool {
 		errors.Go(func() error {
-			if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), item); err != nil {
+			if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), &item); err != nil {
 				return err
 			}
 			return nil
