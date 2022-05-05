@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/gorilla/feeds v1.1.1
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/stretchr/testify v1.7.1
 	github.com/urfave/cli/v2 v2.5.1
 	github.com/wilhelm-murdoch/go-collection v1.0.8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -24,7 +23,6 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

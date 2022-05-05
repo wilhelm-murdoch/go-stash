@@ -56,18 +56,22 @@ func (t *Template) Save(basePath string) error {
 		return err
 	}
 
-	f, err := os.Create(basePath)
+	file, err := os.Create(basePath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer file.Close()
 
 	var buffer strings.Builder
 	if err := templates.ExecuteTemplate(&buffer, t.Name, t.mapData()); err != nil {
 		return err
 	}
 
-	f.WriteString(buffer.String())
+	_, err = file.WriteString(buffer.String())
+	if err != nil {
+		return err
+	}
+
 	log.Printf("wrote %s", basePath)
 
 	return nil

@@ -79,15 +79,19 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 	}
 
 	data := []template.TemplateData{
-		{Name: "posts", Data: posts.Items()},
-		{Name: "tags", Data: tags.Items()},
-		{Name: "authors", Data: authors.Items()},
+		{Name: "Posts", Data: posts.Items()},
+		{Name: "Tags", Data: tags.Items()},
+		{Name: "Authors", Data: authors.Items()},
 	}
 
 	for _, mapping := range cfg.Mappings {
 		log.Printf("rendering %s mappings to html", mapping.Type)
 		switch mapping.Type {
 		case config.Index:
+			if err := writers.WriteHtml(fmt.Sprintf("%s/index.html", cfg.Paths.Root), mapping, cfg, data...); err != nil {
+				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
+			}
+		case config.Page:
 			if err := writers.WriteHtml(fmt.Sprintf("%s/%s", cfg.Paths.Root, mapping.Output), mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
 			}
@@ -99,10 +103,33 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags), tags, mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
 			}
+		case config.Author:
+			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors), authors, mapping, cfg, data...); err != nil {
+				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
+			}
 		default:
 			log.Printf("mapping type %s is currently not supported", mapping.Type)
 		}
 	}
+
+	sitemap := writers.NewSitemap[models.Bloggable]()
+
+	posts.Each(func(_ int, post models.Post) bool {
+		sitemap.AddUrl(post.GetUrl(cfg), post.GetDateUpdated())
+		return false
+	})
+
+	tags.Each(func(_ int, tag models.Tag) bool {
+		sitemap.AddUrl(tag.GetUrl(cfg), tag.GetDateUpdated())
+		return false
+	})
+
+	authors.Each(func(_ int, author models.Author) bool {
+		sitemap.AddUrl(author.GetUrl(cfg), author.GetDateUpdated())
+		return false
+	})
+
+	sitemap.Save(cfg.Paths.Root)
 
 	return nil
 }

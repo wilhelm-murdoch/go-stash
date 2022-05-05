@@ -25,6 +25,14 @@ type Author struct {
 	} `json:"socialMedia"`
 }
 
+func (a Author) GetUrl(cfg *config.Configuration) string {
+	return fmt.Sprintf("%s/author/%s", cfg.Url, a.GetSlug())
+}
+
+func (a Author) GetDateUpdated() string {
+	return ""
+}
+
 func (a Author) GetSlug() string {
 	return strings.ToLower(a.Username)
 }

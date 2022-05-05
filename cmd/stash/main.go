@@ -1,15 +1,10 @@
 package main
 
-// multiple index types? for static pages?
-// batch processor for file downloads
 // implement proper logger
 // document
 // test
 // examples... maybe?
 // move image processing closer to structs
-// image processing
-// writing individual pages
-// site map generation
 // watch / reload functionality for webserver ( maybe render --watch )
 
 import (

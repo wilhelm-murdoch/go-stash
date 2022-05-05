@@ -136,11 +136,11 @@ func (c *Configuration) validateMappings() error {
 	isPathValid := func(label, path string) error {
 		stats, err := os.Stat(path)
 		if err != nil {
-			return fmt.Errorf("file system error for `%s`: %s", label, err)
+			return fmt.Errorf("file system error for %s: %s", label, err)
 		}
 
 		if stats.IsDir() {
-			return fmt.Errorf("path `%s` defined for `%s` must be a valid file", path, label)
+			return fmt.Errorf("path %s defined for %s must be a valid file", path, label)
 		}
 
 		return nil
@@ -150,8 +150,30 @@ func (c *Configuration) validateMappings() error {
 		return fmt.Sprintf("%s/%s/%s", c.Paths.Root, c.Paths.Templates, fileName)
 	}
 
+	contains := func(text string, strings []string) bool {
+		for _, s := range strings {
+			if text == s {
+				return true
+			}
+		}
+		return false
+	}
+
+	var mappingPaths []string
 	var indexMappingDefined bool
 	for i1, mapping := range c.Mappings {
+		if mapping.Type == Index && indexMappingDefined {
+			return fmt.Errorf("duplicate index mapping found at mappings[%d]", i1)
+		}
+
+		if mapping.Output != "" {
+			if contains(mapping.Output, mappingPaths) {
+				return fmt.Errorf("output path %s defined for mappings[%d]output must distinct", mapping.Output, i1)
+			}
+
+			mappingPaths = append(mappingPaths, mapping.Output)
+		}
+
 		if mapping.Type == Index {
 			indexMappingDefined = true
 		}
@@ -172,7 +194,7 @@ func (c *Configuration) validateMappings() error {
 	}
 
 	if !indexMappingDefined {
-		return errors.New("a single mapping of type `index` must be defined")
+		return errors.New("a single mapping of type index must be defined")
 	}
 
 	return nil

@@ -22,6 +22,17 @@ type Post struct {
 	Author      Author
 }
 
+func (p Post) GetUrl(cfg *config.Configuration) string {
+	return fmt.Sprintf("%s/%s", cfg.Url, p.GetSlug())
+}
+
+func (p Post) GetDateUpdated() string {
+	if p.DateUpdated == "" {
+		return p.DateAdded
+	}
+	return p.DateUpdated
+}
+
 func (p Post) GetSlug() string {
 	return p.Slug
 }
