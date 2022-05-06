@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/wilhelm-murdoch/go-stash/config"
 )
@@ -30,7 +31,7 @@ func (a Author) GetUrl(cfg *config.Configuration) string {
 }
 
 func (a Author) GetDateUpdated() string {
-	return ""
+	return time.Now().Format(time.RFC3339)
 }
 
 func (a Author) GetSlug() string {

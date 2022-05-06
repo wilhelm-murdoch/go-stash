@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/wilhelm-murdoch/go-stash/config"
 )
@@ -18,7 +19,7 @@ func (t Tag) GetUrl(cfg *config.Configuration) string {
 }
 
 func (t Tag) GetDateUpdated() string {
-	return ""
+	return time.Now().Format(time.RFC3339)
 }
 
 func (t Tag) GetSlug() string {
