@@ -7,7 +7,6 @@ serve_port: 3000
 
 paths:
   root: "dist"
-  feeds: "feeds"
   posts: "posts"
   authors: "authors"
   tags: "tags"

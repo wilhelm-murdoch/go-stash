@@ -84,6 +84,8 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 		{Name: "Authors", Data: authors.Items()},
 	}
 
+	sitemap := writers.NewSitemap()
+
 	for _, mapping := range cfg.Mappings {
 		log.Printf("rendering %s mappings to html", mapping.Type)
 		switch mapping.Type {
@@ -91,10 +93,12 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 			if err := writers.WriteHtml(fmt.Sprintf("%s/index.html", cfg.Paths.Root), mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
 			}
+			sitemap.AddUrl(fmt.Sprintf("%s/index.html", cfg.Url), time.Now().Format(time.RFC3339))
 		case config.Page:
 			if err := writers.WriteHtml(fmt.Sprintf("%s/%s", cfg.Paths.Root, mapping.Output), mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
 			}
+			sitemap.AddUrl(fmt.Sprintf("%s/%s", cfg.Url, mapping.Output), time.Now().Format(time.RFC3339))
 		case config.Post:
 			if err := writers.WriteHtmlCollection(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts), posts, mapping, cfg, data...); err != nil {
 				return fmt.Errorf("could not render %s mapping: %s", mapping.Type, err)
@@ -112,8 +116,6 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 		}
 	}
 
-	sitemap := writers.NewSitemap[models.Bloggable]()
-
 	posts.Each(func(_ int, post models.Post) bool {
 		sitemap.AddUrl(post.GetUrl(cfg), post.GetDateUpdated())
 		return false
@@ -130,6 +132,9 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 	})
 
 	sitemap.Save(cfg.Paths.Root)
+	if err := sitemap.UpsertRobots(cfg); err != nil {
+		return err
+	}
 
 	return nil
 }
