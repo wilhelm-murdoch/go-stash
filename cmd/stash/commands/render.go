@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/urfave/cli/v2"
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/config"
@@ -17,7 +18,17 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/writers"
 )
 
-func UnmarshalWalkIntoCollection[B models.Bloggable](basePath string) (*collection.Collection[B], error) {
+// RenderHandler
+func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
+	if !c.Bool("watch") {
+		return render(c, cfg)
+	}
+
+	return watch(c, cfg)
+}
+
+// UnmarshalWalkCollection
+func UnmarshalWalkCollection[B models.Bloggable](basePath string) (*collection.Collection[B], error) {
 	items := collection.New[B]()
 
 	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
@@ -44,9 +55,69 @@ func UnmarshalWalkIntoCollection[B models.Bloggable](basePath string) (*collecti
 	return items, err
 }
 
-func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
+// watch
+func watch(c *cli.Context, cfg *config.Configuration) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	var (
+		quit   = make(chan bool)
+		done   = make(chan bool)
+		errors = make(chan error)
+	)
+
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				switch {
+				case event.Op&fsnotify.Chmod != fsnotify.Chmod:
+					if err := render(c, cfg); err != nil {
+						errors <- err
+					}
+				}
+			case err := <-watcher.Errors:
+				errors <- err
+			}
+		}
+	}()
+
+	err = filepath.Walk(fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Templates), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			if err = watcher.Add(path); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case err := <-errors:
+			close(quit)
+			return err
+		case <-done:
+			return nil
+		}
+	}
+}
+
+// render
+func render(c *cli.Context, cfg *config.Configuration) error {
 	log.Println("unmarshaling posts from local json store")
-	posts, err := UnmarshalWalkIntoCollection[models.Post](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts))
+	posts, err := UnmarshalWalkCollection[models.Post](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal posts from local store: %s", err)
 	}
@@ -62,20 +133,20 @@ func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
 	})
 
 	log.Println("unmarshaling tags from local json store")
-	tags, err := UnmarshalWalkIntoCollection[models.Tag](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags))
+	tags, err := UnmarshalWalkCollection[models.Tag](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal tags from local store: %s", err)
 	}
 
 	log.Println("unmarshaling authors from local json store")
-	authors, err := UnmarshalWalkIntoCollection[models.Author](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors))
+	authors, err := UnmarshalWalkCollection[models.Author](fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors))
 	if err != nil {
 		return fmt.Errorf("could not unmarshal authors from local store: %s", err)
 	}
 
 	log.Println("rendering rss and atom feeds")
 	if err := writers.WriteFeeds(cfg, posts); err != nil {
-		return fmt.Errorf("failed to write %s: %s", fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Feeds), err)
+		return fmt.Errorf("failed to write feeds to %s: %s", cfg.Paths.Root, err)
 	}
 
 	data := []template.TemplateData{

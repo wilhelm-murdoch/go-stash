@@ -90,13 +90,24 @@ func main() {
 			{
 				Name:  "render",
 				Usage: "uses Go templates to write static content",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "config",
+						Usage:   "path to the current project's `.stash.yml` configuration",
+						EnvVars: []string{"CONFIG"},
+					},
+					&cli.BoolFlag{
+						Name:  "watch",
+						Usage: "render your templates as you make changes within your root directory",
+					},
+				},
 				Action: func(c *cli.Context) error {
 					return config.WrapWithConfig(c, commands.RenderHandler)
 				},
 			},
 			{
 				Name:  "serve",
-				Usage: "starts a local web server which exposes your rendered site",
+				Usage: "start a local web server to expose your rendered site",
 				Action: func(c *cli.Context) error {
 					return config.WrapWithConfig(c, commands.ServeHandler)
 				},

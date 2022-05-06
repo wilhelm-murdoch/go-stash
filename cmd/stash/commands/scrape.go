@@ -82,7 +82,7 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 
 	basePathPosts := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts)
 	posts := ingest.Posts.Results()
-	if err := writers.WriteJsonBulk(basePathPosts, posts); err != nil {
+	if err := writers.WriteJsonCollection(basePathPosts, posts); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 
 	basePathTags := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Tags)
 	tags := ingest.Posts.GroupPostsByTag()
-	if err := writers.WriteJsonBulk(basePathTags, tags); err != nil {
+	if err := writers.WriteJsonCollection(basePathTags, tags); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 
 	basePathAuthors := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Authors)
 	authors := ingest.Posts.FilterDistinctAuthors()
-	if err := writers.WriteJsonBulk(basePathAuthors, authors); err != nil {
+	if err := writers.WriteJsonCollection(basePathAuthors, authors); err != nil {
 		return err
 	}
 

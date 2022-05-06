@@ -22,6 +22,12 @@ mappings:
       - "partials/tags.tpl"
       - "partials/recent.tpl"
 
+  - type: "author"
+    input: "author.tpl"
+    partials:
+      - "partials/head.tpl"
+      - "partials/footer.tpl"
+
   - type: "post"
     input: "post.tpl"
     partials:
@@ -40,7 +46,7 @@ mappings:
 
   - type: "page"
     input: "about.tpl"
-    output: "about.html"
+    output: "about/index.html"
     
   - type: "page"
     input: "posts.tpl"

@@ -18,7 +18,7 @@ func WriteJsonManifest[B models.Bloggable](basePath string, items *collection.Co
 	return nil
 }
 
-func WriteJsonBulk[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
+func WriteJsonCollection[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
 	errors := new(errgroup.Group)
 
 	items.Each(func(i int, item B) bool {

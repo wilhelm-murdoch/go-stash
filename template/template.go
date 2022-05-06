@@ -45,6 +45,10 @@ func (t *Template) mapData() map[string]any {
 }
 
 func (t *Template) Save(basePath string) error {
+	if err := os.MkdirAll(filepath.Dir(basePath), os.ModePerm); err != nil {
+		return err
+	}
+
 	funcMap := sprig.FuncMap()
 
 	for name, fn := range funcMapStash {

@@ -51,14 +51,14 @@ func WriteFeeds(cfg *config.Configuration, items *collection.Collection[models.P
 	}
 
 	for k, v := range feeds {
-		file, err := os.Create(fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Feeds, k))
+		file, err := os.Create(fmt.Sprintf("%s/%s", cfg.Paths.Root, k))
 		if err != nil {
 			return err
 		}
 		defer file.Close()
 
 		file.WriteString(v)
-		log.Printf("wrote %s/%s/%s", cfg.Paths.Root, cfg.Paths.Feeds, k)
+		log.Printf("wrote %s/%s", cfg.Paths.Root, k)
 	}
 
 	return nil
