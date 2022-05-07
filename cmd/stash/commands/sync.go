@@ -16,9 +16,9 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/writers"
 )
 
-// ScrapeHandler is responsible for fetching content from the specified
+// SyncHandler is responsible for fetching content from the specified
 // Hashnode website and author:
-func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
+func SyncHandler(c *cli.Context, cfg *config.Configuration) error {
 	client := client.New()
 
 	var since time.Time
@@ -70,7 +70,7 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 
 	images := collection.New[models.Image]()
 
-	ingest.Posts.Results().Each(func(i int, p models.Post) bool {
+	ingest.Posts.Results().Each(func(i int, p *models.Post) bool {
 		images.Push(p.GetImages(cfg)...)
 		images.PushDistinct(p.Author.GetImages(cfg)...)
 		return false
@@ -79,6 +79,11 @@ func ScrapeHandler(c *cli.Context, cfg *config.Configuration) error {
 	if err := writers.WriteFileCollection(images); err != nil {
 		return err
 	}
+
+	ingest.Posts.Results().Each(func(i int, p *models.Post) bool {
+		p.ReplaceImagePaths(cfg)
+		return false
+	})
 
 	basePathPosts := fmt.Sprintf("%s/%s", cfg.Paths.Root, cfg.Paths.Posts)
 	posts := ingest.Posts.Results()

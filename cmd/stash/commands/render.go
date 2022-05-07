@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -32,7 +33,7 @@ func UnmarshalWalkCollection[B models.Bloggable](basePath string) (*collection.C
 	items := collection.New[B]()
 
 	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
-		if fmt.Sprintf("%s/index.json", basePath) != path && err == nil && info.Name() == "index.json" {
+		if strings.HasSuffix(info.Name(), ".json") && err == nil && info.Name() != "index.json" {
 			content, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err

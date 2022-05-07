@@ -12,13 +12,13 @@ import (
 
 var Posts = &PostIngester{
 	client:  client.New(),
-	results: collection.New[models.Post](),
+	results: collection.New[*models.Post](),
 }
 
 // PostIngester
 type PostIngester struct {
 	client  *client.Client
-	results *collection.Collection[models.Post]
+	results *collection.Collection[*models.Post]
 }
 
 // Get
@@ -33,7 +33,7 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 
 	log.Printf("processed post: %s\n", slug)
 
-	p.results.Push(result.(models.Post))
+	p.results.Push(result.(*models.Post))
 }
 
 // Length
@@ -42,15 +42,15 @@ func (p *PostIngester) Length() int {
 }
 
 // Results
-func (p *PostIngester) Results() *collection.Collection[models.Post] {
+func (p *PostIngester) Results() *collection.Collection[*models.Post] {
 	return p.results
 }
 
 // FilterDistinctAuthors
-func (p *PostIngester) FilterDistinctAuthors() *collection.Collection[models.Author] {
-	authors := collection.New[models.Author]()
+func (p *PostIngester) FilterDistinctAuthors() *collection.Collection[*models.Author] {
+	authors := collection.New[*models.Author]()
 
-	p.results.Each(func(i int, post models.Post) bool {
+	p.results.Each(func(i int, post *models.Post) bool {
 		if found := authors.Contains(post.Author); !found {
 			authors.Push(post.Author)
 		}
@@ -73,7 +73,7 @@ func (p *PostIngester) GroupPostsByTag() *collection.Collection[models.Tag] {
 		return false
 	}
 
-	p.results.Each(func(i int, post models.Post) bool {
+	p.results.Each(func(i int, post *models.Post) bool {
 		for _, tag := range post.Tags {
 			if !contains(tag, tags) {
 				tags = append(tags, tag)
@@ -83,7 +83,7 @@ func (p *PostIngester) GroupPostsByTag() *collection.Collection[models.Tag] {
 	})
 
 	for i, tag := range tags {
-		p.results.Each(func(_ int, post models.Post) bool {
+		p.results.Each(func(_ int, post *models.Post) bool {
 			if contains(tag, post.Tags) {
 				tags[i].Posts = append(tags[i].Posts, post)
 				tags[i].Count++

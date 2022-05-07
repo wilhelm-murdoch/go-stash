@@ -25,13 +25,14 @@ type Configuration struct {
 	Url         string `json:"url" yaml:"url"`
 	FeedLimit   int    `json:"feedLimit" yaml:"feed_limit"`
 	Author      string `json:"author" yaml:"author"`
-	ServePort   int    `json:"servePort" yaml:"servePort"`
+	ServePort   int    `json:"servePort" yaml:"serve_port"`
 	Paths       struct {
 		Root      string `json:"root" yaml:"root"`
 		Posts     string `json:"posts" yaml:"posts"`
 		Authors   string `json:"authors" yaml:"authors"`
 		Tags      string `json:"tags" yaml:"tags"`
 		Templates string `json:"templates" yaml:"templates"`
+		Files     string `json:"files" yaml:"files"`
 	} `json:"paths" yaml:"paths"`
 	Mappings []*Mapping `json:"mappings" yaml:"mappings"`
 }
@@ -118,6 +119,7 @@ func (c *Configuration) validatePathsBlock() error {
 		"paths.tags":      fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Tags),
 		"paths.authors":   fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Authors),
 		"paths.templates": fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Templates),
+		"paths.files":     fmt.Sprintf("%s/%s", c.Paths.Root, c.Paths.Files),
 	}
 
 	for label, path := range checks {

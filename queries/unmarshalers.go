@@ -23,7 +23,7 @@ var (
 		}
 
 		// { "data": { "post": { ... } } }
-		var results map[string]map[string]models.Post
+		var results map[string]map[string]*models.Post
 		if err := json.Unmarshal(bytes, &results); err != nil {
 			return nil, err
 		}

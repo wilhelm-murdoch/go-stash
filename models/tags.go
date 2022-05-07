@@ -8,10 +8,10 @@ import (
 )
 
 type Tag struct {
-	Name  string `json:"name"`
-	Slug  string `json:"slug"`
-	Count int    `json:"count,omitempty"`
-	Posts []Post `json:"posts,omitempty"`
+	Name  string  `json:"name"`
+	Slug  string  `json:"slug"`
+	Count int     `json:"count,omitempty"`
+	Posts []*Post `json:"posts,omitempty"`
 }
 
 func (t Tag) GetUrl(cfg *config.Configuration) string {

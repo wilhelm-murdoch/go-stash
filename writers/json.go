@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/wilhelm-murdoch/go-collection"
 	"github.com/wilhelm-murdoch/go-stash/models"
@@ -12,7 +13,7 @@ import (
 )
 
 func WriteJsonManifest[B models.Bloggable](basePath string, items *collection.Collection[B]) error {
-	if err := writeJson(basePath, items.Items()); err != nil {
+	if err := writeJson(fmt.Sprintf("%s/index.json", basePath), items.Items()); err != nil {
 		return err
 	}
 	return nil
@@ -23,7 +24,7 @@ func WriteJsonCollection[B models.Bloggable](basePath string, items *collection.
 
 	items.Each(func(i int, item B) bool {
 		errors.Go(func() error {
-			if err := writeJson(fmt.Sprintf("%s/%s", basePath, item.GetSlug()), &item); err != nil {
+			if err := writeJson(fmt.Sprintf("%s/%s.json", basePath, item.GetSlug()), &item); err != nil {
 				return err
 			}
 			return nil
@@ -41,16 +42,16 @@ func WriteJsonCollection[B models.Bloggable](basePath string, items *collection.
 
 // Save
 func writeJson(path string, object any) error {
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
 		return err
 	}
 
-	file, err := os.Create(fmt.Sprintf("%s/index.json", path))
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		log.Printf("wrote %s/index.json\n", path)
+		log.Printf("wrote %s\n", path)
 		file.Close()
 	}()
 

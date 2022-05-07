@@ -11,6 +11,7 @@ paths:
   authors: "authors"
   tags: "tags"
   templates: "templates"
+  files: "files"
 
 mappings:
   - type: "index"
@@ -41,8 +42,13 @@ mappings:
       - "partials/footer.tpl"
 
   - type: "page"
+    input: "authors.tpl"
+    output: "authors/index.html"
+
+  - type: "page"
     input: "tags.tpl"
     output: "tags/index.html"
+
 
   - type: "page"
     input: "about.tpl"
@@ -51,3 +57,7 @@ mappings:
   - type: "page"
     input: "posts.tpl"
     output: "posts/index.html"
+
+  - type: "page"
+    input: "404.tpl"
+    output: "404.html"

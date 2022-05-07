@@ -60,7 +60,7 @@ func main() {
 		Copyright: "(c) 2022 Wilhelm Codes ( https://wilhelm.codes )",
 		Commands: []*cli.Command{
 			{
-				Name:  "scrape",
+				Name:  "sync",
 				Usage: "fetches remote content from Hashnode's API and saves it locally",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -84,7 +84,7 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					return config.WrapWithConfig(c, commands.ScrapeHandler)
+					return config.WrapWithConfig(c, commands.SyncHandler)
 				},
 			},
 			{
@@ -106,10 +106,10 @@ func main() {
 				},
 			},
 			{
-				Name:  "serve",
+				Name:  "server",
 				Usage: "start a local web server to expose your rendered site",
 				Action: func(c *cli.Context) error {
-					return config.WrapWithConfig(c, commands.ServeHandler)
+					return config.WrapWithConfig(c, commands.ServerHandler)
 				},
 			},
 		},

@@ -14,7 +14,6 @@ type Author struct {
 	Name        string `json:"name"`
 	Tagline     string `json:"tagLine"`
 	Photo       string `json:"photo"`
-	CoverImage  string `json:"coverImage"`
 	SocialMedia struct {
 		Twitter       string `json:"twitter"`
 		Github        string `json:"github"`
@@ -39,17 +38,9 @@ func (a Author) GetSlug() string {
 }
 
 func (a Author) GetImages(cfg *config.Configuration) []Image {
-	var images []Image
+	return []Image{{a.Photo, fmt.Sprintf("%s/%s/images/author-%s-%s", cfg.Paths.Root, cfg.Paths.Files, a.GetSlug(), filepath.Base(a.Photo))}}
+}
 
-	destination := fmt.Sprintf("%s/%s/%s", cfg.Paths.Root, cfg.Paths.Authors, a.GetSlug())
-
-	if a.CoverImage != "" {
-		images = append(images, Image{a.CoverImage, fmt.Sprintf("%s/%s", destination, filepath.Base(a.CoverImage))})
-	}
-
-	if a.Photo != "" {
-		images = append(images, Image{a.Photo, fmt.Sprintf("%s/%s", destination, filepath.Base(a.Photo))})
-	}
-
-	return images
+func (a *Author) ReplaceImagePaths(cfg *config.Configuration) {
+	a.Photo = fmt.Sprintf("/%s/images/author-%s-%s", cfg.Paths.Files, a.GetSlug(), filepath.Base(a.Photo))
 }
