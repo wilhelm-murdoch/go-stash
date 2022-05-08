@@ -108,6 +108,16 @@ func main() {
 			{
 				Name:  "server",
 				Usage: "start a local web server to expose your rendered site",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "path",
+						Usage: "opens a browser window directly to the specified URL path",
+					},
+					&cli.BoolFlag{
+						Name:  "no-browser",
+						Usage: "prevent opening a new browser window on startup",
+					},
+				},
 				Action: func(c *cli.Context) error {
 					return config.WrapWithConfig(c, commands.ServerHandler)
 				},
