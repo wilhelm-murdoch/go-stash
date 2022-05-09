@@ -3,9 +3,6 @@ package main
 // implement proper logger
 // document
 // test
-// examples... maybe?
-// move image processing closer to structs
-// watch / reload functionality for webserver ( maybe render --watch )
 
 import (
 	"fmt"

@@ -17,8 +17,8 @@ type Author struct {
 	SocialMedia struct {
 		Twitter       string `json:"twitter"`
 		Github        string `json:"github"`
-		StackOverflow string `json:"stackoverflow"`
-		LinkedIn      string `json:"linkedin"`
+		Stackoverflow string `json:"stackoverflow"`
+		Linkedin      string `json:"linkedin"`
 		Google        string `json:"google"`
 		Website       string `json:"website"`
 		Facebook      string `json:"facebook"`

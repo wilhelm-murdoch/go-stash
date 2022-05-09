@@ -1,4 +1,4 @@
-title: "wilhelm codes"
+title: "Wilhelm Codes"
 description: "I code here and do other things."
 url: "https://wilhelm.codes"
 feed_limit: 15
@@ -21,7 +21,7 @@ mappings:
       - "partials/footer.tpl"
       - "partials/card.tpl"
       - "partials/tags.tpl"
-      - "partials/recent.tpl"
+      - "partials/list.tpl"
 
   - type: "author"
     input: "author.tpl"
@@ -53,7 +53,11 @@ mappings:
   - type: "page"
     input: "about.tpl"
     output: "about/index.html"
-    
+    partials:
+      - "partials/head.tpl"
+      - "partials/header.tpl"
+      - "partials/footer.tpl"
+
   - type: "page"
     input: "posts.tpl"
     output: "posts/index.html"
@@ -61,3 +65,7 @@ mappings:
   - type: "page"
     input: "404.tpl"
     output: "404.html"
+    partials:
+      - "partials/head.tpl"
+      - "partials/header.tpl"
+      - "partials/footer.tpl"

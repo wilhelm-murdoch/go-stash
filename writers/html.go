@@ -12,8 +12,6 @@ import (
 
 // WriteHtml
 func WriteHtml(basePath string, mapping *config.Mapping, cfg *config.Configuration, data ...template.TemplateData) error {
-	data = append(data, template.TemplateData{Name: "Config", Data: cfg})
-
 	template := template.NewFromMapping(mapping, data...)
 	if err := template.Save(basePath); err != nil {
 		return err

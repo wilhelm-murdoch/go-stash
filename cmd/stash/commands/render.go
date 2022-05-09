@@ -21,8 +21,12 @@ import (
 
 // RenderHandler
 func RenderHandler(c *cli.Context, cfg *config.Configuration) error {
+	if err := render(c, cfg); err != nil {
+		return err
+	}
+
 	if !c.Bool("watch") {
-		return render(c, cfg)
+		return nil
 	}
 
 	return watch(c, cfg)
@@ -154,6 +158,7 @@ func render(c *cli.Context, cfg *config.Configuration) error {
 		{Name: "Posts", Data: posts.Items()},
 		{Name: "Tags", Data: tags.Items()},
 		{Name: "Authors", Data: authors.Items()},
+		{Name: "Config", Data: cfg},
 	}
 
 	sitemap := writers.NewSitemap()

@@ -9,7 +9,7 @@ import (
 	"github.com/wilhelm-murdoch/go-stash/config"
 )
 
-const imageRegexPattern = `<img[^>]+\bsrc=["']([^"'?]+)["']`
+const imageRegexPattern = `<img[^>]+\bsrc=["']([^"'?]+).*["']`
 
 type Post struct {
 	Title       string `json:"title"`
@@ -50,6 +50,7 @@ func (p Post) GetImages(cfg *config.Configuration) []Image {
 	pattern := regexp.MustCompile(imageRegexPattern)
 	matches := pattern.FindAllStringSubmatch(p.Content, -1)
 	for _, match := range matches {
+		fmt.Println(match[1])
 		images = append(images, Image{match[1], fmt.Sprintf("%s/post-%s-%s", destination, p.GetSlug(), filepath.Base(match[1]))})
 	}
 

@@ -29,12 +29,17 @@ func New() *Client {
 }
 
 // Execute
-func (c *Client) Execute(query *queries.Query) (any, error) {
+func (c *Client) Execute(query queries.Query) (any, error) {
 	response, err := c.client.Post(c.baseUrl, "application/json", strings.NewReader(query.String()))
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode == 429 {
+		time.Sleep(1 * time.Second) // should use exponential backoff for this if it becomes too much trouble
+		return c.Execute(query)
+	}
 
 	if response.StatusCode != 200 {
 		return nil, fmt.Errorf("expected a 200 response, but got %d instead", response.StatusCode)

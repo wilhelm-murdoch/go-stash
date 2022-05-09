@@ -59,7 +59,9 @@ func ServerHandler(c *cli.Context, cfg *config.Configuration) error {
 		if bytes, err := os.ReadFile(fmt.Sprintf("%s/404.html", cfg.Paths.Root)); err == nil {
 			log.Printf("%s %s\n", r.Method, r.RequestURI)
 			w.Write(bytes)
+			return
 		}
+		w.Write([]byte("404 not found"))
 	})
 
 	for route, file := range serverRoutes {

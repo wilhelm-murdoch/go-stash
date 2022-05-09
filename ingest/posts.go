@@ -36,11 +36,6 @@ func (p *PostIngester) Get(slug, hostname string, wg *sync.WaitGroup) {
 	p.results.Push(result.(*models.Post))
 }
 
-// Length
-func (p *PostIngester) Length() int {
-	return p.results.Length()
-}
-
 // Results
 func (p *PostIngester) Results() *collection.Collection[*models.Post] {
 	return p.results

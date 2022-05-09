@@ -63,8 +63,8 @@ type Query struct {
 }
 
 // New
-func New(name, query string, unmarshaler func([]byte) (any, error), args ...any) *Query {
-	return &Query{
+func New(name, query string, unmarshaler func([]byte) (any, error), args ...any) Query {
+	return Query{
 		Name:        name,
 		Query:       fmt.Sprintf(`{"operationName": "%s", "query": "query %s { %s }" }`, name, name, query),
 		Unmarshaler: unmarshaler,
