@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -37,7 +38,12 @@ func (c *Client) Execute(query queries.Query) (any, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode == 429 {
-		time.Sleep(1 * time.Second) // should use exponential backoff for this if it becomes too much trouble
+		if query.Backoff.Attempt() >= 10 {
+			return nil, fmt.Errorf("maximum attempts reached; skipping %s", query.Name)
+		}
+		d := query.Backoff.Duration()
+		log.Printf("rate limit detected for %s; retrying in %s for attempt %d/%d\n", query.Name, d, int(query.Backoff.Attempt()), 10)
+		time.Sleep(d)
 		return c.Execute(query)
 	}
 

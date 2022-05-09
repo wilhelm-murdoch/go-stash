@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/jpillora/backoff"
 )
 
 var (
@@ -60,15 +62,21 @@ type Query struct {
 	Query       string
 	args        []any
 	Unmarshaler func([]byte) (any, error)
+	Backoff     *backoff.Backoff
 }
 
 // New
 func New(name, query string, unmarshaler func([]byte) (any, error), args ...any) Query {
+	backoff := &backoff.Backoff{
+		Jitter: true,
+	}
+
 	return Query{
 		Name:        name,
 		Query:       fmt.Sprintf(`{"operationName": "%s", "query": "query %s { %s }" }`, name, name, query),
 		Unmarshaler: unmarshaler,
 		args:        args,
+		Backoff:     backoff,
 	}
 }
 
