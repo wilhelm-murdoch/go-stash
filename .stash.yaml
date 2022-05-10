@@ -39,7 +39,9 @@ mappings:
     input: "tag.tpl"
     partials:
       - "partials/head.tpl"
+      - "partials/header.tpl"
       - "partials/footer.tpl"
+      - "partials/list.tpl"
 
   - type: "page"
     input: "authors.tpl"
